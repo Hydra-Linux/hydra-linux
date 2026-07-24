@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 128" fill="none">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#06b6d4"/>
+      <stop offset="100%" stop-color="#0891b2"/>
+    </linearGradient>
+  </defs>
+  <!-- Three hydra heads -->
+  <g stroke="url(#g)" stroke-width="3" fill="none" stroke-linecap="round">
+    <!-- Left head -->
+    <path d="M70 110 C60 90 45 75 50 55 C55 40 70 35 80 45 C90 55 85 70 75 80 C65 90 55 85 60 70"/>
+    <path d="M50 55 C45 45 50 30 60 28 M50 55 C40 50 35 40 40 32"/>
+    <!-- Center head (larger) -->
+    <path d="M128 110 C118 85 105 65 110 40 C115 20 135 15 145 28 C155 42 148 60 135 72 C122 84 110 78 118 60"/>
+    <path d="M110 40 C108 28 115 14 128 10 M110 40 C100 32 98 20 105 12"/>
+    <!-- Right head -->
+    <path d="M186 110 C196 90 211 75 206 55 C201 40 186 35 176 45 C166 55 171 70 181 80 C191 90 201 85 196 70"/>
+    <path d="M206 55 C211 45 206 30 196 28 M206 55 C216 50 221 40 216 32"/>
+    <!-- Body/neck merging down -->
+    <path d="M70 110 C90 115 110 120 128 120"/>
+    <path d="M128 120 C146 120 166 115 186 110"/>
+    <path d="M100 115 C110 122 120 125 128 125 C136 125 146 122 156 115"/>
+  </g>
+  <!-- Eyes -->
+  <circle cx="60" cy="45" r="2.5" fill="url(#g)"/>
+  <circle cx="120" cy="35" r="3" fill="url(#g)"/>
+  <circle cx="196" cy="45" r="2.5" fill="url(#g)"/>
+</svg>

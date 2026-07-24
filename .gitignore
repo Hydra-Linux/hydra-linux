@@ -1,0 +1,7 @@
+*.o
+build/
+flash/flash
+*.tar.zst
+*.iso
+*.part.tar.zst
+.DS_Store
