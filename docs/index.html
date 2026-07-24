@@ -12,6 +12,7 @@
 <a href="/" class="logo"><img src="assets/logo.svg" alt="" height="32"><span>Hydra Linux</span></a>
 <div class="nav-links"><a href="/">Home</a><a href="download.html">Download</a><a href="pages/docs.html">Docs</a><a href="pages/community.html">Community</a></div>
 </div></nav>
+
 <section class="hero"><div class="hero-content">
 <img src="assets/logo.svg" alt="" class="hero-logo">
 <h1>Many heads. One system.</h1>
@@ -19,64 +20,98 @@
 <a href="download.html" class="btn-primary">Download</a>
 <p class="release-info">v1.0 — Coming Soon</p>
 </div></section>
-<section class="features">
-<div class="feature-card"><h3>⚡ Powered by flash</h3><p>Custom source-based package manager with intelligent 3-tier builds. Small packages compile, medium packages download binaries, massive packages assemble from pre-compiled parts.</p></div>
-<div class="feature-card"><h3>🎨 Choose your desktop</h3><p>KDE Plasma 6 (default), GNOME, Xfce, or Sway — pick your environment during installation. All running on Wayland with PipeWire audio.</p></div>
-<div class="feature-card"><h3>🔧 Source-first, smart defaults</h3><p>Packages under 100MB build from source. 100–450MB use binaries. Over 450MB? Pre-compiled parts assemble locally. Best of both worlds.</p></div>
-</section>
-<section class="tiers"><h2>How flash Handles Packages</h2>
-<p class="tiers-intro">When you run <code>flash install &lt;package&gt;</code>, it checks the source size and chooses the fastest strategy automatically.</p>
 
-<div class="tier-cards">
-<div class="tier-card tier-1">
-<div class="tier-badge">≤ 100 MB</div>
-<h3>⚙️ Source Build</h3>
-<p>Packages under 100MB are compiled entirely from source inside a sandboxed <strong>bubblewrap</strong> environment. You get full optimization for your CPU with the exact flags you configure in <code>flash.conf</code>.</p>
-<div class="tier-flow">
-<span>Download source</span><span>→</span><span>Verify GPG</span><span>→</span><span>Extract</span><span>→</span><span>Build in sandbox</span><span>→</span><span>Install</span>
+<section class="about"><div class="about-inner">
+<h2>What is Hydra Linux?</h2>
+<p class="about-lede">Hydra Linux is a rolling-release, source-oriented Linux distribution designed for people who want control over their system without sacrificing convenience.</p>
+<div class="about-grid">
+<div class="about-item">
+<h4>🔄 Rolling, never reinstalling</h4>
+<p>Install once, update forever. No version upgrades — just a continuous stream of the latest software.</p>
 </div>
-<div class="tier-examples"><strong>Examples:</strong> fastfetch, curl, vim, OpenRC, wayland, sway, wireguard-tools, most packages</div>
+<div class="about-item">
+<h4>📦 Source-first, but smart about it</h4>
+<p>Packages are compiled from source by default, optimized for your hardware. Big packages automatically switch to binaries or pre-compiled parts so you're not waiting hours.</p>
 </div>
-
-<div class="tier-card tier-2">
-<div class="tier-badge">100–450 MB</div>
-<h3>📦 Binary Download</h3>
-<p>Medium packages use pre-built binaries from the repository. <strong>No compilation</strong> — just download, verify, and install. This saves hours on large toolchains and browsers while keeping the experience fast.</p>
-<div class="tier-flow">
-<span>Check repo</span><span>→</span><span>Download .tar.zst</span><span>→</span><span>Verify GPG</span><span>→</span><span>Extract to root</span><span>→</span><span>Run scripts</span>
+<div class="about-item">
+<h4>⚡ flash package manager</h4>
+<p>Every package tool is built in C — fast, minimal dependencies, and designed to be as simple as Arch's pacman but for a source-based workflow.</p>
 </div>
-<div class="tier-examples"><strong>Examples:</strong> Firefox, LLVM/Clang, Rust, WebKitGTK, Chromium, Linux kernel</div>
+<div class="about-item">
+<h4>🎨 Your desktop, your choice</h4>
+<p>KDE Plasma 6 out of the box, but GNOME, Xfce, and Sway are one checkbox away during installation.</p>
 </div>
-
-<div class="tier-card tier-3">
-<div class="tier-badge">> 450 MB</div>
-<h3>🧩 Part Assembly</h3>
-<p>Massive packages are split into logical modules during build. <strong>Pre-compiled parts</strong> are downloaded and assembled locally — faster than a full source build, more flexible than a blob binary.</p>
-<div class="tier-flow">
-<span>Discover parts</span><span>→</span><span>Download each .part.tar.zst</span><span>→</span><span>Verify signatures</span><span>→</span><span>Merge into assembly dir</span><span>→</span><span>Run linker</span><span>→</span><span>Install</span>
+<div class="about-item">
+<h4>🛡️ Modern stack</h4>
+<p>Wayland, PipeWire, btrfs with zstd, OpenRC, AppArmor, DNS-over-TLS — everything is current and secure by default.</p>
 </div>
-<div class="tier-examples"><strong>Examples:</strong> Qt 6, KDE Plasma, GCC</div>
+<div class="about-item">
+<h4>🧱 Built from scratch, transparently</h4>
+<p>Full 4-stage bootstrap from cross-toolchain to running system. Every recipe, every config, every script is open in one repository.</p>
 </div>
 </div>
-
-<table class="tier-table">
-<tr><th>Package</th><th>Source Size</th><th>Strategy</th></tr>
-<tr><td>fastfetch</td><td>~2 MB</td><td class="tag-source">Source</td></tr>
-<tr><td>Linux kernel</td><td>~150 MB</td><td class="tag-binary">Binary</td></tr>
-<tr><td>Firefox</td><td>~250 MB</td><td class="tag-binary">Binary</td></tr>
-<tr><td>LLVM/Clang</td><td>~150 MB</td><td class="tag-binary">Binary</td></tr>
-<tr><td>Chromium</td><td>~400 MB</td><td class="tag-binary">Binary</td></tr>
-<tr><td>Qt 6</td><td>~500 MB</td><td class="tag-parts">Parts</td></tr>
-<tr><td>KDE Plasma</td><td>~900 MB</td><td class="tag-parts">Parts</td></tr>
-<tr><td>GCC</td><td>~600 MB</td><td class="tag-parts">Parts</td></tr>
-</table>
-</section>
-
-<section class="specs"><h2>Built With</h2><div class="spec-grid">
-<div><strong>Kernel</strong> Linux Zen 6.x</div><div><strong>Init</strong> OpenRC + supervise-daemon</div><div><strong>Libc</strong> glibc + libc++</div>
-<div><strong>Compiler</strong> LLVM/clang + GCC</div><div><strong>FS</strong> btrfs with zstd compression</div><div><strong>Audio</strong> PipeWire + WirePlumber</div>
-<div><strong>Boot</strong> GRUB + mkinitcpio</div><div><strong>DNS</strong> stubby (DNS-over-TLS)</div><div><strong>Firewall</strong> ufw (nftables)</div>
-<div><strong>MAC</strong> AppArmor</div>
 </div></section>
+
+<section class="section-header"><h2>How flash Handles Packages</h2><p class="section-sub">When you run <code>flash install &lt;package&gt;</code>, it checks the source size and chooses the fastest strategy automatically.</p></section>
+
+<section class="tiers"><div class="tiers-inner">
+<div class="tier-card">
+<div class="tier-label label-source">≤ 100 MB</div>
+<h3>Compiled from Source</h3>
+<p>Packages under 100 MB are built entirely from source inside a bubblewrap sandbox, optimized for your CPU with the flags you configure.</p>
+<div class="tier-steps"><span>Download source</span><span>Verify GPG</span><span>Build in sandbox</span><span>Install</span></div>
+<span class="tier-examples">fastfetch, curl, vim, OpenRC, sway, wayland, wireguard-tools, <em>most packages</em></span>
+</div>
+
+<div class="tier-card">
+<div class="tier-label label-binary">100–450 MB</div>
+<h3>Downloaded as Binary</h3>
+<p>Medium packages use pre-built binaries from the repository. No compilation — just download, verify, and install. Saves hours on large toolchains and browsers.</p>
+<div class="tier-steps"><span>Check repository</span><span>Download .tar.zst</span><span>Verify signature</span><span>Extract &amp; install</span></div>
+<span class="tier-examples">Firefox, LLVM/Clang, Rust, Chromium, WebKitGTK, Linux kernel</span>
+</div>
+
+<div class="tier-card">
+<div class="tier-label label-parts">> 450 MB</div>
+<h3>Assembled from Parts</h3>
+<p>Massive packages are split into logical modules during the distro build. Pre-compiled parts are downloaded and assembled locally — faster than a full build, more flexible than a single blob.</p>
+<div class="tier-steps"><span>Discover modules</span><span>Download each part</span><span>Merge &amp; link</span><span>Install</span></div>
+<span class="tier-examples">Qt 6, KDE Plasma, GCC</span>
+</div>
+</div></section>
+
+<section class="examples"><div class="examples-inner">
+<h2>Real-World Examples</h2>
+<div class="examples-table">
+<div class="ex-row ex-head"><span>Package</span><span>Source Size</span><span>Strategy</span></div>
+<div class="ex-row"><span>fastfetch</span><span>~2 MB</span><span class="tag tag-source">Source</span></div>
+<div class="ex-row"><span>Linux kernel</span><span>~150 MB</span><span class="tag tag-binary">Binary</span></div>
+<div class="ex-row"><span>Firefox</span><span>~250 MB</span><span class="tag tag-binary">Binary</span></div>
+<div class="ex-row"><span>LLVM/Clang</span><span>~150 MB</span><span class="tag tag-binary">Binary</span></div>
+<div class="ex-row"><span>Chromium</span><span>~400 MB</span><span class="tag tag-binary">Binary</span></div>
+<div class="ex-row"><span>Qt 6</span><span>~500 MB</span><span class="tag tag-parts">Parts</span></div>
+<div class="ex-row"><span>KDE Plasma</span><span>~900 MB</span><span class="tag tag-parts">Parts</span></div>
+<div class="ex-row"><span>GCC</span><span>~600 MB</span><span class="tag tag-parts">Parts</span></div>
+</div>
+</div></section>
+
+<section class="specs"><div class="specs-inner">
+<h2>Built With</h2>
+<div class="spec-grid">
+<div><strong>Kernel</strong><span>Linux Zen 6.x</span></div>
+<div><strong>Init</strong><span>OpenRC + supervise-daemon</span></div>
+<div><strong>Libc</strong><span>glibc + libc++</span></div>
+<div><strong>Compiler</strong><span>LLVM/clang + GCC</span></div>
+<div><strong>Filesystem</strong><span>btrfs with zstd compression</span></div>
+<div><strong>Audio</strong><span>PipeWire + WirePlumber</span></div>
+<div><strong>Boot</strong><span>GRUB + mkinitcpio</span></div>
+<div><strong>Display</strong><span>Wayland + Xwayland</span></div>
+<div><strong>DNS</strong><span>stubby (DNS-over-TLS)</span></div>
+<div><strong>Firewall</strong><span>ufw (nftables)</span></div>
+<div><strong>MAC</strong><span>AppArmor</span></div>
+<div><strong>VPN</strong><span>WireGuard</span></div>
+</div>
+</div></section>
+
 <footer><p>Built from scratch with ❤️ &middot; <a href="https://github.com/Hydra-Linux/hydra-linux">GitHub</a></p></footer>
 </body></html>
