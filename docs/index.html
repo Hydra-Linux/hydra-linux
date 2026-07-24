@@ -24,6 +24,54 @@
 <div class="feature-card"><h3>🎨 Choose your desktop</h3><p>KDE Plasma 6 (default), GNOME, Xfce, or Sway — pick your environment during installation. All running on Wayland with PipeWire audio.</p></div>
 <div class="feature-card"><h3>🔧 Source-first, smart defaults</h3><p>Packages under 100MB build from source. 100–450MB use binaries. Over 450MB? Pre-compiled parts assemble locally. Best of both worlds.</p></div>
 </section>
+<section class="tiers"><h2>How flash Handles Packages</h2>
+<p class="tiers-intro">When you run <code>flash install &lt;package&gt;</code>, it checks the source size and chooses the fastest strategy automatically.</p>
+
+<div class="tier-cards">
+<div class="tier-card tier-1">
+<div class="tier-badge">≤ 100 MB</div>
+<h3>⚙️ Source Build</h3>
+<p>Packages under 100MB are compiled entirely from source inside a sandboxed <strong>bubblewrap</strong> environment. You get full optimization for your CPU with the exact flags you configure in <code>flash.conf</code>.</p>
+<div class="tier-flow">
+<span>Download source</span><span>→</span><span>Verify GPG</span><span>→</span><span>Extract</span><span>→</span><span>Build in sandbox</span><span>→</span><span>Install</span>
+</div>
+<div class="tier-examples"><strong>Examples:</strong> fastfetch, curl, vim, OpenRC, wayland, sway, wireguard-tools, most packages</div>
+</div>
+
+<div class="tier-card tier-2">
+<div class="tier-badge">100–450 MB</div>
+<h3>📦 Binary Download</h3>
+<p>Medium packages use pre-built binaries from the repository. <strong>No compilation</strong> — just download, verify, and install. This saves hours on large toolchains and browsers while keeping the experience fast.</p>
+<div class="tier-flow">
+<span>Check repo</span><span>→</span><span>Download .tar.zst</span><span>→</span><span>Verify GPG</span><span>→</span><span>Extract to root</span><span>→</span><span>Run scripts</span>
+</div>
+<div class="tier-examples"><strong>Examples:</strong> Firefox, LLVM/Clang, Rust, WebKitGTK, Chromium, Linux kernel</div>
+</div>
+
+<div class="tier-card tier-3">
+<div class="tier-badge">> 450 MB</div>
+<h3>🧩 Part Assembly</h3>
+<p>Massive packages are split into logical modules during build. <strong>Pre-compiled parts</strong> are downloaded and assembled locally — faster than a full source build, more flexible than a blob binary.</p>
+<div class="tier-flow">
+<span>Discover parts</span><span>→</span><span>Download each .part.tar.zst</span><span>→</span><span>Verify signatures</span><span>→</span><span>Merge into assembly dir</span><span>→</span><span>Run linker</span><span>→</span><span>Install</span>
+</div>
+<div class="tier-examples"><strong>Examples:</strong> Qt 6, KDE Plasma, GCC</div>
+</div>
+</div>
+
+<table class="tier-table">
+<tr><th>Package</th><th>Source Size</th><th>Strategy</th></tr>
+<tr><td>fastfetch</td><td>~2 MB</td><td class="tag-source">Source</td></tr>
+<tr><td>Linux kernel</td><td>~150 MB</td><td class="tag-binary">Binary</td></tr>
+<tr><td>Firefox</td><td>~250 MB</td><td class="tag-binary">Binary</td></tr>
+<tr><td>LLVM/Clang</td><td>~150 MB</td><td class="tag-binary">Binary</td></tr>
+<tr><td>Chromium</td><td>~400 MB</td><td class="tag-binary">Binary</td></tr>
+<tr><td>Qt 6</td><td>~500 MB</td><td class="tag-parts">Parts</td></tr>
+<tr><td>KDE Plasma</td><td>~900 MB</td><td class="tag-parts">Parts</td></tr>
+<tr><td>GCC</td><td>~600 MB</td><td class="tag-parts">Parts</td></tr>
+</table>
+</section>
+
 <section class="specs"><h2>Built With</h2><div class="spec-grid">
 <div><strong>Kernel</strong> Linux Zen 6.x</div><div><strong>Init</strong> OpenRC + supervise-daemon</div><div><strong>Libc</strong> glibc + libc++</div>
 <div><strong>Compiler</strong> LLVM/clang + GCC</div><div><strong>FS</strong> btrfs with zstd compression</div><div><strong>Audio</strong> PipeWire + WirePlumber</div>

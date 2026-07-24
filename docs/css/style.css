@@ -56,4 +56,29 @@ td:first-child { font-weight: 600; color: var(--text); width: 40%; }
 td:last-child { color: var(--text2); }
 footer { margin-top: auto; text-align: center; padding: 2rem; background: var(--bg2); border-top: 1px solid var(--border); color: var(--text2); font-size: 0.9rem; }
 footer a { color: var(--accent); text-decoration: none; }
-@media (max-width:768px) { .hero h1 { font-size: 2rem; } .nav-links { gap: 1rem; } .features { grid-template-columns: 1fr; } }
+
+/* Tier system */
+.tiers { max-width: 1200px; margin: 0 auto; padding: 4rem 2rem; text-align: center; }
+.tiers h2 { font-size: 2rem; margin-bottom: 0.5rem; }
+.tiers-intro { color: var(--text2); margin-bottom: 3rem; font-size: 1.1rem; }
+.tiers-intro code { color: var(--accent); background: var(--bg3); padding: 0.15rem 0.4rem; border-radius: 4px; font-size: 0.9em; }
+.tier-cards { display: grid; grid-template-columns: repeat(auto-fit,minmax(320px,1fr)); gap: 1.5rem; margin-bottom: 3rem; }
+.tier-card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 2rem; text-align: left; position: relative; transition: border-color 0.2s; }
+.tier-card:hover { border-color: var(--accent); }
+.tier-badge { position: absolute; top: -0.75rem; right: 1rem; padding: 0.25rem 0.75rem; border-radius: 999px; font-size: 0.75rem; font-weight: 700; color: #fff; }
+.tier-1 .tier-badge { background: #059669; }
+.tier-2 .tier-badge { background: #d97706; }
+.tier-3 .tier-badge { background: #dc2626; }
+.tier-card h3 { font-size: 1.25rem; margin-bottom: 1rem; }
+.tier-card p { color: var(--text2); font-size: 0.95rem; line-height: 1.7; }
+.tier-flow { display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem 0.5rem; margin: 1rem 0; padding: 0.75rem; background: var(--bg3); border-radius: var(--radius); font-size: 0.8rem; }
+.tier-flow span { color: var(--text2); }
+.tier-flow span:nth-child(odd) { color: var(--accent); font-weight: 600; }
+.tier-examples { font-size: 0.85rem; color: var(--text2); padding-top: 0.75rem; border-top: 1px solid var(--border); }
+.tier-examples strong { color: var(--text); }
+.tier-table { max-width: 600px; margin: 0 auto; }
+.tier-table th { padding: 0.75rem 1rem; border-bottom: 2px solid var(--accent); color: var(--accent); text-align: left; }
+.tag-source { color: #34d399; font-weight: 600; }
+.tag-binary { color: #fbbf24; font-weight: 600; }
+.tag-parts { color: #f87171; font-weight: 600; }
+@media (max-width:768px) { .hero h1 { font-size: 2rem; } .nav-links { gap: 1rem; } .features { grid-template-columns: 1fr; } .tier-cards { grid-template-columns: 1fr; } }
