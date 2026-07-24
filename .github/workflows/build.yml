@@ -1,23 +1,16 @@
 name: Build Hydra Linux
-
-on:
-  push:
-    branches: [main, master]
-  pull_request:
-    branches: [main, master]
-
+on: [push, pull_request]
 jobs:
   build-flash:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - name: Install deps
-        run: sudo apt-get update && sudo apt-get install -y gcc make libsqlite3-dev libarchive-dev libgpgme-dev libpicosat-dev
+        run: sudo apt-get update && sudo apt-get install -y gcc make libsqlite3-dev libarchive-dev libgpgme-dev
       - name: Build flash
         run: cd flash && make
       - name: Test flash help
         run: ./flash/flash --help
-
   lint-recipes:
     runs-on: ubuntu-latest
     steps:
@@ -27,16 +20,3 @@ jobs:
           for f in recipes/*/*/recipe.sh; do
             bash -n "$f" && echo "OK: $f" || echo "FAIL: $f"
           done
-
-  build-website:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Validate HTML
-        run: |
-          sudo apt-get install -y tidy
-          tidy -e website/index.html website/download.html 2>/dev/null || true
-      - name: Upload Pages Artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: website/
