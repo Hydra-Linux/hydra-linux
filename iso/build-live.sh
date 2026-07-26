@@ -380,24 +380,75 @@ else
 fi
 
 IDIR="${BUILD_BASE}/initramfs"
-sudo rm -rf "$IDIR" && mkdir -p "$IDIR"/{bin,proc,sys,dev}
-sudo cp "$ROOTFS/usr/bin/bash" "$ROOTFS/usr/bin/mount" "$ROOTFS/usr/bin/umount" \
-     "$ROOTFS/usr/bin/mkdir" "$ROOTFS/usr/bin/grep" "$ROOTFS/usr/bin/sleep" "$IDIR/bin/" 2>/dev/null
-sudo cp "$ROOTFS/usr/sbin/switch_root" "$IDIR/bin/" 2>/dev/null || true
+sudo rm -rf "$IDIR" && mkdir -p "$IDIR"/{bin,proc,sys,dev,lib64}
+
+copy_deps() {
+  local bin="$1"
+  [ ! -f "$bin" ] && return
+  sudo cp -L "$bin" "$IDIR/bin/" 2>/dev/null || true
+  for lib in $(ldd "$bin" 2>/dev/null | grep -o '/[^ ]*' | sort -u); do
+    local dir=$(dirname "$lib")
+    sudo mkdir -p "$IDIR$dir"
+    sudo cp -L "$lib" "$IDIR$lib" 2>/dev/null || true
+  done
+}
+
+copy_deps "$ROOTFS/usr/bin/bash"
+copy_deps "$ROOTFS/usr/bin/mount"
+copy_deps "$ROOTFS/usr/bin/umount"
+copy_deps "$ROOTFS/usr/bin/mkdir"
+copy_deps "$ROOTFS/usr/bin/grep"
+copy_deps "$ROOTFS/usr/bin/sleep"
+copy_deps "$ROOTFS/usr/sbin/switch_root"
+copy_deps "$ROOTFS/usr/bin/blkid"
+copy_deps "$ROOTFS/usr/bin/modprobe"
+
+# Copy kernel modules needed for live boot
+sudo mkdir -p "$IDIR/lib/modules"
+KVER=$(basename "$(dirname "$(dirname "$KERNEL_FILE")")" 2>/dev/null || echo "7.1.4-zen1-1-zen")
+sudo cp -r "$ROOTFS/usr/lib/modules/$KVER" "$IDIR/lib/modules/" 2>/dev/null || true
+sudo rm -f "$IDIR/lib/modules/$KVER"/{modules.alias,modules.dep,modules.symbols,modules.builtin} 2>/dev/null || true
 sudo ln -sf /bin/bash "$IDIR/bin/sh"
 
-cat | sudo tee "$IDIR/init" << INIT
+cat | sudo tee "$IDIR/init" << 'INIT'
 #!/bin/sh
 /bin/mount -t proc proc /proc
 /bin/mount -t sysfs sysfs /sys
 /bin/mount -t devtmpfs devtmpfs /dev
 /bin/mkdir -p /media
-/bin/mount -t iso9660 /dev/sr0 /media 2>/dev/null || /bin/mount -t vfat /dev/sr0 /media 2>/dev/null || true
+# Load storage kernel modules
+/bin/modprobe sr_mod 2>/dev/null || true
+/bin/modprobe sd_mod 2>/dev/null || true
+/bin/modprobe isofs 2>/dev/null || true
+/bin/modprobe squashfs 2>/dev/null || true
+/bin/modprobe loop 2>/dev/null || true
+/bin/modprobe ahci 2>/dev/null || true
+/bin/modprobe ata_piix 2>/dev/null || true
+/bin/sleep 1
+# Try all possible CD/DVD devices
+for dev in /dev/sr0 /dev/sr1 /dev/cdrom /dev/scd0 /dev/sda /dev/sdb /dev/sdc; do
+  if [ -b "$dev" ]; then
+    /bin/mount -t iso9660 "$dev" /media 2>/dev/null && break
+    /bin/mount -t vfat "$dev" /media 2>/dev/null && break
+  fi
+done
+# Fallback: scan /sys for block devices
+if [ ! -f /media/live/hydra-root.squashfs ]; then
+  for dev in /sys/block/*; do
+    name=$(basename "$dev")
+    case "$name" in
+      sr*|sd*) /bin/mount -t iso9660 "/dev/$name" /media 2>/dev/null || true ;;
+    esac
+    [ -f /media/live/hydra-root.squashfs ] && break
+  done
+fi
 if [ -f /media/live/hydra-root.squashfs ]; then
   /bin/mkdir -p /newroot
   /bin/mount -t squashfs -o loop /media/live/hydra-root.squashfs /newroot
+  /bin/umount /media 2>/dev/null
   exec /bin/switch_root /newroot /sbin/openrc-init
 fi
+echo "ERROR: Cannot find live filesystem!"
 exec /bin/sh
 INIT
 sudo chmod +x "$IDIR/init"
@@ -449,7 +500,7 @@ sudo chmod 644 "$ISODIR/live/hydra-root.squashfs" 2>/dev/null
 
 cd "$PROJECT" && rm -f "$ISO_NAME"
 sudo grub-mkrescue -o "$ISO_NAME" "$ISODIR" \
-  -- -volid "HYDRA_LINUX" -iso-level 3 -full-iso9660-filenames 2>&1 | grep -v "^libisofs: WARNING\|^xorriso"
+  -- -volid "HYDRA_LINUX" 2>&1 | grep -v "^libisofs: WARNING\|^xorriso"
 
 sudo chown "$USER:$USER" "$ISO_NAME" 2>/dev/null
 
