@@ -401,13 +401,15 @@ copy_deps "$ROOTFS/usr/bin/grep"
 copy_deps "$ROOTFS/usr/bin/sleep"
 copy_deps "$ROOTFS/usr/sbin/switch_root"
 copy_deps "$ROOTFS/usr/bin/blkid"
-copy_deps "$ROOTFS/usr/bin/modprobe"
 
 # Copy kernel modules needed for live boot
 sudo mkdir -p "$IDIR/lib/modules"
 KVER=$(basename "$(dirname "$(dirname "$KERNEL_FILE")")" 2>/dev/null || echo "7.1.4-zen1-1-zen")
-sudo cp -r "$ROOTFS/usr/lib/modules/$KVER" "$IDIR/lib/modules/" 2>/dev/null || true
-sudo rm -f "$IDIR/lib/modules/$KVER"/{modules.alias,modules.dep,modules.symbols,modules.builtin} 2>/dev/null || true
+sudo cp -r "$ROOTFS/usr/lib/modules/$KVER/kernel/fs/squashfs" "$IDIR/lib/modules/$KVER/kernel/fs/" 2>/dev/null || true
+sudo cp -r "$ROOTFS/usr/lib/modules/$KVER/kernel/fs/isofs" "$IDIR/lib/modules/$KVER/kernel/fs/" 2>/dev/null || true
+sudo cp -r "$ROOTFS/usr/lib/modules/$KVER/kernel/drivers/scsi/sr_mod.ko*" "$IDIR/lib/modules/$KVER/kernel/drivers/scsi/" 2>/dev/null || true
+sudo cp -r "$ROOTFS/usr/lib/modules/$KVER/kernel/drivers/ata" "$IDIR/lib/modules/$KVER/kernel/drivers/" 2>/dev/null || true
+sudo depmod -b "$IDIR" "$KVER" 2>/dev/null || true
 sudo ln -sf /bin/bash "$IDIR/bin/sh"
 
 cat | sudo tee "$IDIR/init" << 'INIT'
@@ -417,31 +419,23 @@ cat | sudo tee "$IDIR/init" << 'INIT'
 /bin/mount -t devtmpfs devtmpfs /dev
 /bin/mkdir -p /media
 # Load storage kernel modules
-/bin/modprobe sr_mod 2>/dev/null || true
-/bin/modprobe sd_mod 2>/dev/null || true
-/bin/modprobe isofs 2>/dev/null || true
-/bin/modprobe squashfs 2>/dev/null || true
-/bin/modprobe loop 2>/dev/null || true
-/bin/modprobe ahci 2>/dev/null || true
-/bin/modprobe ata_piix 2>/dev/null || true
-/bin/sleep 1
-# Try all possible CD/DVD devices
-for dev in /dev/sr0 /dev/sr1 /dev/cdrom /dev/scd0 /dev/sda /dev/sdb /dev/sdc; do
-  if [ -b "$dev" ]; then
-    /bin/mount -t iso9660 "$dev" /media 2>/dev/null && break
-    /bin/mount -t vfat "$dev" /media 2>/dev/null && break
-  fi
-done
-# Fallback: scan /sys for block devices
-if [ ! -f /media/live/hydra-root.squashfs ]; then
-  for dev in /sys/block/*; do
-    name=$(basename "$dev")
-    case "$name" in
-      sr*|sd*) /bin/mount -t iso9660 "/dev/$name" /media 2>/dev/null || true ;;
-    esac
-    [ -f /media/live/hydra-root.squashfs ] && break
+KO=/lib/modules
+KV=$(ls $KO 2>/dev/null | head -1)
+if [ -n "$KV" ]; then
+  MODS="kernel/fs/isofs kernel/fs/squashfs kernel/drivers/ata kernel/drivers/scsi/sr_mod"
+  for m in $MODS; do
+    find "$KO/$KV/$m" -name '*.ko*' 2>/dev/null | while read f; do
+      insmod "$f" 2>/dev/null || true
+    done
   done
 fi
+/bin/sleep 1
+# Try all block devices
+for dev in $(ls /dev/sr* /dev/sd* /dev/vd* /dev/hd* 2>/dev/null); do
+  [ -b "$dev" ] || continue
+  /bin/mount -t iso9660 "$dev" /media 2>/dev/null && break
+  /bin/mount -t vfat "$dev" /media 2>/dev/null && break
+done
 if [ -f /media/live/hydra-root.squashfs ]; then
   /bin/mkdir -p /newroot
   /bin/mount -t squashfs -o loop /media/live/hydra-root.squashfs /newroot
@@ -449,6 +443,8 @@ if [ -f /media/live/hydra-root.squashfs ]; then
   exec /bin/switch_root /newroot /sbin/openrc-init
 fi
 echo "ERROR: Cannot find live filesystem!"
+echo "Available block devices:"
+ls -la /dev/sr* /dev/sd* /dev/vd* 2>/dev/null || echo "(none found)"
 exec /bin/sh
 INIT
 sudo chmod +x "$IDIR/init"
