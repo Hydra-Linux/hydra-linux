@@ -397,56 +397,115 @@ copy_deps "$ROOTFS/usr/bin/bash"
 copy_deps "$ROOTFS/usr/bin/mount"
 copy_deps "$ROOTFS/usr/bin/umount"
 copy_deps "$ROOTFS/usr/bin/mkdir"
-copy_deps "$ROOTFS/usr/bin/grep"
 copy_deps "$ROOTFS/usr/bin/sleep"
 copy_deps "$ROOTFS/usr/sbin/switch_root"
 copy_deps "$ROOTFS/usr/bin/blkid"
+# modprobe/losetup from kmod package
+copy_deps "$ROOTFS/usr/bin/kmod"
+sudo ln -sf kmod "$IDIR/bin/modprobe"
+sudo ln -sf kmod "$IDIR/bin/losetup"
+sudo ln -sf kmod "$IDIR/bin/insmod"
+sudo ln -sf kmod "$IDIR/bin/rmmod"
 
-# Copy kernel modules needed for live boot
 sudo mkdir -p "$IDIR/lib/modules"
-KVER=$(basename "$(dirname "$(dirname "$KERNEL_FILE")")" 2>/dev/null || echo "7.1.4-zen1-1-zen")
-sudo cp -r "$ROOTFS/usr/lib/modules/$KVER/kernel/fs/squashfs" "$IDIR/lib/modules/$KVER/kernel/fs/" 2>/dev/null || true
-sudo cp -r "$ROOTFS/usr/lib/modules/$KVER/kernel/fs/isofs" "$IDIR/lib/modules/$KVER/kernel/fs/" 2>/dev/null || true
-sudo cp -r "$ROOTFS/usr/lib/modules/$KVER/kernel/drivers/scsi/sr_mod.ko*" "$IDIR/lib/modules/$KVER/kernel/drivers/scsi/" 2>/dev/null || true
-sudo cp -r "$ROOTFS/usr/lib/modules/$KVER/kernel/drivers/ata" "$IDIR/lib/modules/$KVER/kernel/drivers/" 2>/dev/null || true
-sudo depmod -b "$IDIR" "$KVER" 2>/dev/null || true
+KVER=$(basename "$(dirname "$KERNEL_FILE")" 2>/dev/null || echo "7.1.4-zen1-1-zen")
+
+# Copy all kernel modules needed for live boot
+sudo mkdir -p "$IDIR/lib/modules/$KVER/kernel/fs" "$IDIR/lib/modules/$KVER/kernel/drivers"
+for kd in kernel/fs/isofs kernel/fs/squashfs kernel/drivers/ata kernel/drivers/scsi; do
+  src="$ROOTFS/usr/lib/modules/$KVER/$kd"
+  if [ -d "$src" ]; then
+    sudo cp -r "$src" "$IDIR/lib/modules/$KVER/$kd" 2>/dev/null || true
+  fi
+done
+# Copy loop module directly
+sudo mkdir -p "$IDIR/lib/modules/$KVER/kernel/drivers/block"
+for mod in loop.ko.zst; do
+  src="$ROOTFS/usr/lib/modules/$KVER/kernel/drivers/block/$mod"
+  if [ -f "$src" ]; then
+    sudo cp -L "$src" "$IDIR/lib/modules/$KVER/kernel/drivers/block/" 2>/dev/null || true
+  fi
+done
+
+sudo depmod -b "$IDIR" "$KVER" 2>&1 | grep -v "depmod:" || true
 sudo ln -sf /bin/bash "$IDIR/bin/sh"
 
 cat | sudo tee "$IDIR/init" << 'INIT'
 #!/bin/sh
+export PATH=/bin
+
+# Mount essential filesystems
 /bin/mount -t proc proc /proc
 /bin/mount -t sysfs sysfs /sys
 /bin/mount -t devtmpfs devtmpfs /dev
-/bin/mkdir -p /media
-# Load storage kernel modules
-KO=/lib/modules
-KV=$(ls $KO 2>/dev/null | head -1)
+
+# Find kernel version
+for kvdir in /lib/modules/*/; do
+  [ -d "$kvdir" ] || continue
+  KV=${kvdir%/}
+  KV=${KV##*/}
+  break
+done
+
+# Load kernel modules
 if [ -n "$KV" ]; then
-  MODS="kernel/fs/isofs kernel/fs/squashfs kernel/drivers/ata kernel/drivers/scsi/sr_mod"
-  for m in $MODS; do
-    find "$KO/$KV/$m" -name '*.ko*' 2>/dev/null | while read f; do
-      insmod "$f" 2>/dev/null || true
-    done
+  /bin/modprobe -d / isofs 2>/dev/null
+  /bin/modprobe -d / squashfs 2>/dev/null
+  /bin/modprobe -d / sr_mod 2>/dev/null
+  /bin/modprobe -d / sd_mod 2>/dev/null
+  /bin/modprobe -d / loop 2>/dev/null
+  /bin/modprobe -d / ata_piix 2>/dev/null
+  /bin/modprobe -d / ahci 2>/dev/null
+  /bin/modprobe -d / ata_generic 2>/dev/null
+  /bin/modprobe -d / virtio_blk 2>/dev/null
+fi
+
+# Wait for devices to appear
+/bin/sleep 2
+
+# Find CD-ROM from /proc/partitions
+CDROM=""
+while read -r major minor blocks name; do
+  case "$name" in
+    sr[0-9]*) CDROM="/dev/$name"; break ;;
+  esac
+done < /proc/partitions
+
+# Fallback: try common device paths
+if [ -z "$CDROM" ]; then
+  for dev in /dev/sr0 /dev/sr1 /dev/sda /dev/sdb /dev/vda; do
+    if [ -b "$dev" ]; then
+      fstype=$(/bin/blkid -s TYPE -o value "$dev" 2>/dev/null)
+      if [ "$fstype" = "iso9660" ]; then
+        CDROM="$dev"
+        break
+      fi
+    fi
   done
 fi
-/bin/sleep 1
-# Try all block devices
-for dev in $(ls /dev/sr* /dev/sd* /dev/vd* /dev/hd* 2>/dev/null); do
-  [ -b "$dev" ] || continue
-  /bin/mount -t iso9660 "$dev" /media 2>/dev/null && break
-  /bin/mount -t vfat "$dev" /media 2>/dev/null && break
-done
-if [ -f /media/live/hydra-root.squashfs ]; then
-  /bin/mkdir -p /newroot
-  /bin/mount -t squashfs -o loop /media/live/hydra-root.squashfs /newroot
-  /bin/umount /media 2>/dev/null
-  exec /bin/switch_root /newroot /sbin/openrc-init
+
+# Mount ISO
+if [ -n "$CDROM" ]; then
+  /bin/mkdir -p /media
+  /bin/mount -t iso9660 -o ro "$CDROM" /media
 fi
+
+if [ -f /media/live/hydra-root.squashfs ]; then
+  /bin/mkdir -p /mnt/root
+  /bin/mount -t squashfs -o loop,ro /media/live/hydra-root.squashfs /mnt/root
+  cd /mnt/root
+  /bin/umount /media 2>/dev/null
+  exec /bin/switch_root -c /dev/console /mnt/root /sbin/openrc-init
+fi
+
 echo "ERROR: Cannot find live filesystem!"
+echo "Kernel: $KV"
+echo "CD-ROM device: $CDROM"
 echo "Available block devices:"
-ls -la /dev/sr* /dev/sd* /dev/vd* 2>/dev/null || echo "(none found)"
-exec /bin/sh
-INIT
+while read -r major minor blocks name; do
+  echo "  /dev/$name"
+done < /proc/partitions
+exec /bin/bash
 sudo chmod +x "$IDIR/init"
 
 cd "$IDIR" && sudo find . | sudo cpio -o -H newc | zstd -f > "$ISODIR/boot/initramfs.img" 2>/dev/null
