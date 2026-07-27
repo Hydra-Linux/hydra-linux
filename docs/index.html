@@ -33,7 +33,7 @@
 </div></section>
 
 <section class="about"><div class="about-inner">
-<h2>What is Hydra Linux?</h2>
+<h2 class="darkyellow">What is Hydra Linux?</h2>
 <p class="about-lede">A rolling, source-based distribution built for everyone — not just experts. It gives you control, performance, and transparency without getting in your way.</p>
 <div class="about-grid">
 <div class="about-item">
@@ -107,7 +107,7 @@
 </div></section>
 
 <section class="specs"><div class="specs-inner">
-<h2>Built With</h2>
+<h2 class="darkyellow">Built With</h2>
 <div class="spec-grid">
 <div><strong>Kernel</strong><span>Linux Zen 6.x</span></div>
 <div><strong>Init</strong><span>OpenRC + supervise-daemon</span></div>
@@ -121,6 +121,37 @@
 <div><strong>Firewall</strong><span>ufw (nftables)</span></div>
 <div><strong>MAC</strong><span>AppArmor</span></div>
 <div><strong>VPN</strong><span>WireGuard</span></div>
+</div>
+</div></section>
+
+<section class="about"><div class="about-inner">
+<h2 class="darkyellow">What Makes Hydra Different?</h2>
+<p class="about-lede">Beyond the package manager, Hydra Linux brings a fresh approach to how a distribution is built, packaged, and secured.</p>
+<div class="about-grid">
+<div class="about-item">
+<h4>📜 Recipe System</h4>
+<p>Every package is defined by a simple, human-readable recipe file — specifying source URLs, dependencies, patches, and build steps. No convoluted PKGBUILDs or ebuilds. Recipes are designed to be easy to write and maintain.</p>
+</div>
+<div class="about-item">
+<h4>🔬 4-Stage Bootstrap</h4>
+<p>The entire distribution bootstraps from a cross-toolchain in four transparent stages. Every script is open, every decision documented. You can rebuild the whole distro from scratch with a single command — no binary seed required.</p>
+</div>
+<div class="about-item">
+<h4>🏝️ Sandboxed Builds</h4>
+<p>Source compilation runs inside bubblewrap sandboxes — isolated from your system, reproducible, and safe. No contamination from host libraries, no leftover files, no surprises.</p>
+</div>
+<div class="about-item">
+<h4>🏭 Single-Command ISO Pipeline</h4>
+<p>From a tree of recipes to a bootable ISO in one command. The build system resolves dependencies, compiles packages, assembles the rootfs, generates the initramfs, and produces a bootable image — fully automated.</p>
+</div>
+<div class="about-item">
+<h4>🛡️ Security by Default</h4>
+<p>AppArmor enforced out of the box, DNS-over-TLS via stubby, ufw firewall preconfigured with sane defaults, and WireGuard tools preinstalled. No hunting for packages to secure your system after install.</p>
+</div>
+<div class="about-item">
+<h4>📦 Cooked Package Cache</h4>
+<p>Pre-built binary packages (called "cooked" packages) are cached and shared. When you install a package that's already been cooked, you get a binary instantly — no recompilation needed, even in a source-first distro.</p>
+</div>
 </div>
 </div></section>
 

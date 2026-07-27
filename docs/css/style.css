@@ -6,6 +6,7 @@
   --accent2: #0891b2;
   --text: #e2e8f0;
   --text2: #94a3b8;
+  --darkyellow: #b8860b;
   --border: #1e293b;
   --radius: 8px;
 }
@@ -54,6 +55,7 @@ nav { background: var(--bg2); border-bottom: 1px solid var(--border); position: 
 /* About */
 .about, .tiers, .examples, .specs { padding: 5rem 2rem; }
 .about-inner, .tiers-inner, .examples-inner, .specs-inner { max-width: 1100px; margin: 0 auto; }
+.darkyellow { color: var(--darkyellow); }
 .about-lede { text-align: center; color: var(--text2); font-size: 1.15rem; max-width: 700px; margin: 0 auto 3rem; }
 .about-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(300px,1fr)); gap: 1.5rem; }
 .about-item { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; transition: border-color 0.2s; }
