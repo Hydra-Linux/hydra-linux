@@ -4,13 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>Hydra Linux — Many heads. One system.</title>
+<base href="/hydra-linux/">
 <link rel="stylesheet" href="css/style.css">
 <link rel="icon" href="assets/logo.png">
 </head>
 <body>
 <nav><div class="nav-inner">
-<a href="/" class="logo"><img src="assets/logo.png" alt="" height="32"><span>Hydra Linux</span></a>
-<div class="nav-links"><a href="/">Home</a><a href="download.html">Download</a><a href="pages/docs.html">Docs</a><a href="pages/community.html">Community</a></div>
+<a href="./" class="logo"><img src="assets/logo.png" alt="" height="32"><span>Hydra Linux</span></a>
+<div class="nav-links"><a href="./">Home</a><a href="download.html">Download</a><a href="pages/docs.html">Docs</a><a href="pages/community.html">Community</a></div>
 </div></nav>
 
 <section class="hero"><div class="hero-content">
@@ -23,137 +24,52 @@
 
 <section class="philosophy"><div class="philosophy-inner">
 <div class="philosophy-block">
+<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
 <h2>For Everyone</h2>
 <p>Hydra Linux aims to be a <strong>universal distribution</strong> — from developers and power users to people just getting started with Linux. You shouldn't have to choose between control and convenience.</p>
 </div>
 <div class="philosophy-block">
+<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
 <h2>OpenRC, Done Right</h2>
-<p><strong>OpenRC doesn't mean worse or less user-friendly.</strong> It's fast, clean, and easy to configure. With supervise-daemon you get full service supervision without the complexity. Simple doesn't mean limited.</p>
+<p>Hydra uses OpenRC — <strong>simple, fast, and dependency-aware</strong>. No systemd, no complexity. You get clean boot logs, parallel service startup, and full control over your init system.</p>
+</div>
+<div class="philosophy-block">
+<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+<h2>flash Package Manager</h2>
+<p>Our hybrid package manager builds from source when you want control, and pulls from the binary cache when you want speed. Sandboxed builds mean <strong>your system stays clean</strong>.</p>
+</div>
+<div class="philosophy-block">
+<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+<h2>Rolling Releases</h2>
+<p>ISO snapshots built from the current recipe tree — <strong>install once, upgrade forever</strong>. No version numbers, no upgrade anxiety.</p>
 </div>
 </div></section>
 
-<section class="about"><div class="about-inner">
-<h2 class="darkyellow">What is Hydra Linux?</h2>
-<p class="about-lede">A rolling, source-based distribution built for everyone — not just experts. It gives you control, performance, and transparency without getting in your way.</p>
-<div class="about-grid">
-<div class="about-item">
-<h4>🔄 Rolling, never reinstalling</h4>
-<p>Install once, update forever. No version upgrades — just a continuous stream of the latest software.</p>
+<section class="features"><div class="features-inner">
+<h2>Why Hydra?</h2>
+<div class="features-grid">
+<div class="feature-card">
+  <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+  <h3>Source-First</h3>
+  <p>Packages are built from source with full optimization flags for your hardware.</p>
 </div>
-<div class="about-item">
-<h4>📦 Source-first, but smart about it</h4>
-<p>Packages are compiled from source by default, optimized for your hardware. Big packages automatically switch to binaries or pre-compiled parts so you're not waiting hours.</p>
+<div class="feature-card">
+  <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+  <h3>User Freedom</h3>
+  <p>Choose between KDE Plasma, GNOME, Xfce, Sway, Hyprland, or no desktop at all.</p>
 </div>
-<div class="about-item">
-<h4>⚡ flash package manager</h4>
-<p>Every package tool is built in C — fast, minimal dependencies, and designed to be as simple as Arch's pacman but for a source-based workflow.</p>
+<div class="feature-card">
+  <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+  <h3>Sandboxed Builds</h3>
+  <p>bubblewrap isolation ensures builds never touch your running system.</p>
 </div>
-<div class="about-item">
-<h4>🎨 Your desktop, your choice</h4>
-<p>KDE Plasma 6 out of the box, but GNOME, Xfce, and Sway are one checkbox away during installation.</p>
-</div>
-<div class="about-item">
-<h4>🚀 OpenRC is not a downgrade</h4>
-<p>Fast, clean, and easy to configure — OpenRC with supervise-daemon gives you full service supervision without the complexity of systemd. User-friendly doesn't require bloat.</p>
-</div>
-<div class="about-item">
-<h4>🧱 Built from scratch, transparently</h4>
-<p>Full 4-stage bootstrap from cross-toolchain to running system. Every recipe, every config, every script is open in one repository.</p>
-</div>
-</div>
-</div></section>
-
-<section class="section-header"><h2>How flash Handles Packages</h2><p class="section-sub">When you run <code>flash install &lt;package&gt;</code>, it checks the source size and chooses the fastest strategy automatically.</p></section>
-
-<section class="tiers"><div class="tiers-inner">
-<div class="tier-card">
-<div class="tier-label label-source">≤ 100 MB</div>
-<h3>Compiled from Source</h3>
-<p>Packages under 100 MB are built entirely from source inside a bubblewrap sandbox, optimized for your CPU with the flags you configure.</p>
-<div class="tier-steps"><span>Download source</span><span>Verify GPG</span><span>Build in sandbox</span><span>Install</span></div>
-<span class="tier-examples">fastfetch, curl, vim, OpenRC, sway, wayland, wireguard-tools, <em>most packages</em></span>
-</div>
-
-<div class="tier-card">
-<div class="tier-label label-binary">100–450 MB</div>
-<h3>Downloaded as Binary</h3>
-<p>Medium packages use pre-built binaries from the repository. No compilation — just download, verify, and install. Saves hours on large toolchains and browsers.</p>
-<div class="tier-steps"><span>Check repository</span><span>Download .tar.zst</span><span>Verify signature</span><span>Extract &amp; install</span></div>
-<span class="tier-examples">Firefox, LLVM/Clang, Rust, Chromium, WebKitGTK, Linux kernel</span>
-</div>
-
-<div class="tier-card">
-<div class="tier-label label-parts">> 450 MB</div>
-<h3>Assembled from Parts</h3>
-<p>Massive packages are split into logical modules during the distro build. Pre-compiled parts are downloaded and assembled locally — faster than a full build, more flexible than a single blob.</p>
-<div class="tier-steps"><span>Discover modules</span><span>Download each part</span><span>Merge &amp; link</span><span>Install</span></div>
-<span class="tier-examples">Qt 6, KDE Plasma, GCC</span>
-</div>
-</div></section>
-
-<section class="examples"><div class="examples-inner">
-<h2>Real-World Examples</h2>
-<div class="examples-table">
-<div class="ex-row ex-head"><span>Package</span><span>Source Size</span><span>Strategy</span></div>
-<div class="ex-row"><span>fastfetch</span><span>~2 MB</span><span class="tag tag-source">Source</span></div>
-<div class="ex-row"><span>Linux kernel</span><span>~150 MB</span><span class="tag tag-binary">Binary</span></div>
-<div class="ex-row"><span>Firefox</span><span>~250 MB</span><span class="tag tag-binary">Binary</span></div>
-<div class="ex-row"><span>LLVM/Clang</span><span>~150 MB</span><span class="tag tag-binary">Binary</span></div>
-<div class="ex-row"><span>Chromium</span><span>~400 MB</span><span class="tag tag-binary">Binary</span></div>
-<div class="ex-row"><span>Qt 6</span><span>~500 MB</span><span class="tag tag-parts">Parts</span></div>
-<div class="ex-row"><span>KDE Plasma</span><span>~900 MB</span><span class="tag tag-parts">Parts</span></div>
-<div class="ex-row"><span>GCC</span><span>~600 MB</span><span class="tag tag-parts">Parts</span></div>
-</div>
-</div></section>
-
-<section class="specs"><div class="specs-inner">
-<h2 class="darkyellow">Built With</h2>
-<div class="spec-grid">
-<div><strong>Kernel</strong><span>Linux Zen 6.x</span></div>
-<div><strong>Init</strong><span>OpenRC + supervise-daemon</span></div>
-<div><strong>Libc</strong><span>glibc + libc++</span></div>
-<div><strong>Compiler</strong><span>LLVM/clang + GCC</span></div>
-<div><strong>Filesystem</strong><span>btrfs with zstd compression</span></div>
-<div><strong>Audio</strong><span>PipeWire + WirePlumber</span></div>
-<div><strong>Boot</strong><span>GRUB + mkinitcpio</span></div>
-<div><strong>Display</strong><span>Wayland + Xwayland</span></div>
-<div><strong>DNS</strong><span>stubby (DNS-over-TLS)</span></div>
-<div><strong>Firewall</strong><span>ufw (nftables)</span></div>
-<div><strong>MAC</strong><span>AppArmor</span></div>
-<div><strong>VPN</strong><span>WireGuard</span></div>
-</div>
-</div></section>
-
-<section class="about"><div class="about-inner">
-<h2 class="darkyellow">What Makes Hydra Different?</h2>
-<p class="about-lede">Beyond the package manager, Hydra Linux brings a fresh approach to how a distribution is built, packaged, and secured.</p>
-<div class="about-grid">
-<div class="about-item">
-<h4>📜 Recipe System</h4>
-<p>Every package is defined by a simple, human-readable recipe file — specifying source URLs, dependencies, patches, and build steps. No convoluted PKGBUILDs or ebuilds. Recipes are designed to be easy to write and maintain.</p>
-</div>
-<div class="about-item">
-<h4>🔬 4-Stage Bootstrap</h4>
-<p>The entire distribution bootstraps from a cross-toolchain in four transparent stages. Every script is open, every decision documented. You can rebuild the whole distro from scratch with a single command — no binary seed required.</p>
-</div>
-<div class="about-item">
-<h4>🏝️ Sandboxed Builds</h4>
-<p>Source compilation runs inside bubblewrap sandboxes — isolated from your system, reproducible, and safe. No contamination from host libraries, no leftover files, no surprises.</p>
-</div>
-<div class="about-item">
-<h4>🏭 Single-Command ISO Pipeline</h4>
-<p>From a tree of recipes to a bootable ISO in one command. The build system resolves dependencies, compiles packages, assembles the rootfs, generates the initramfs, and produces a bootable image — fully automated.</p>
-</div>
-<div class="about-item">
-<h4>🛡️ Security by Default</h4>
-<p>AppArmor enforced out of the box, DNS-over-TLS via stubby, ufw firewall preconfigured with sane defaults, and WireGuard tools preinstalled. No hunting for packages to secure your system after install.</p>
-</div>
-<div class="about-item">
-<h4>📦 Cooked Package Cache</h4>
-<p>Pre-built binary packages (called "cooked" packages) are cached and shared. When you install a package that's already been cooked, you get a binary instantly — no recompilation needed, even in a source-first distro.</p>
+<div class="feature-card">
+  <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+  <h3>Transparent</h3>
+  <p>Every recipe is a simple bash script — review, modify, and share easily.</p>
 </div>
 </div>
 </div></section>
 
-<footer><p>Built from scratch with ❤️ &middot; <a href="https://github.com/Hydra-Linux/hydra-linux">GitHub</a></p></footer>
+<footer><p>Built from scratch with ❤️ &middot; <a href="https://github.com/Hydra-Linux/hydra-linux">GitHub</a> &middot; <a href="https://hydra-linux.github.io/hydra-linux/">Website</a></p></footer>
 </body></html>

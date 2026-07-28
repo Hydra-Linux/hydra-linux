@@ -2,14 +2,17 @@
 # Hydra Linux - Live ISO Builder (OpenRC + KDE Plasma)
 # Downloads Arch packages and extracts them manually, excluding systemd
 
-BUILD_BASE="/home/oliwier/hydra-build"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+
+BUILD_BASE="${PROJECT_DIR}/hydra-build"
 ROOTFS="${BUILD_BASE}/rootfs"
 PKG_CACHE="${BUILD_BASE}/pkgcache"
 ISODIR="${BUILD_BASE}/iso"
 OVERLAY="${BUILD_BASE}/overlay"
-FLASH_SRC="/home/oliwier/hydra-linux/flash"
-RECIPES="/home/oliwier/hydra-linux/recipes"
-PROJECT="/home/oliwier/hydra-linux"
+FLASH_SRC="${PROJECT_DIR}/flash"
+RECIPES="${PROJECT_DIR}/recipes"
+PROJECT="${PROJECT_DIR}"
 ISO_DATE="$(date +%Y%m%d)"
 ISO_NAME="hydra-linux-${ISO_DATE}-x86_64.iso"
 LIVE_USER="hydra"

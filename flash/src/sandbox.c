@@ -1,6 +1,6 @@
 #include "flash.h"
 
-int sandbox_build(const char *recipe_path, const char *build_dir, int allow_network) {
+int sandbox_build(const char *recipe_path, const char *build_dir, int allow_network, const char *src_dir) {
     if (g_flags.dry_run) {
         printf("Would sandbox-build: %s in %s\n", recipe_path, build_dir);
         return 0;
@@ -83,6 +83,15 @@ int sandbox_build(const char *recipe_path, const char *build_dir, int allow_netw
     argv[n++] = "--setenv";
     argv[n++] = "BUILD_DIR";
     argv[n++] = "/build";
+
+    if (src_dir && *src_dir) {
+        argv[n++] = "--ro-bind";
+        argv[n++] = src_dir;
+        argv[n++] = "/sources";
+        argv[n++] = "--setenv";
+        argv[n++] = "SRCDIR";
+        argv[n++] = "/sources";
+    }
 
     if (!allow_network) {
         argv[n++] = "--unshare-net";

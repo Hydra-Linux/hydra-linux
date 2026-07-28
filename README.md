@@ -1,11 +1,14 @@
 # Hydra Linux
 
+[![Website](https://img.shields.io/badge/web-hydra--linux.github.io-blue)](https://hydra-linux.github.io/hydra-linux/)
 ![CI](https://github.com/Hydra-Linux/hydra-linux/actions/workflows/build.yml/badge.svg)
 ![License](https://img.shields.io/badge/license-GPL--3.0-blue.svg)
 
 **Many heads. One system.**
 
 Hydra Linux is a source-based, rolling-release Linux distribution for x86_64. It combines the flexibility of source-based package management with optional binary caching for practical daily use.
+
+🌐 **Website:** [https://hydra-linux.github.io/hydra-linux/](https://hydra-linux.github.io/hydra-linux/)
 
 ## Features
 

@@ -36,7 +36,7 @@ static int install_source(const char *name, const char *version, const char *cac
     mkdir_p(build_dir);
 
     char recipe_path[FLASH_PATH_MAX];
-    snprintf(recipe_path, sizeof(recipe_path), "%s/%s/flash.recipe", g_config.recipes_dir, name);
+    snprintf(recipe_path, sizeof(recipe_path), "%s/%s/recipe.sh", g_config.recipes_dir, name);
 
     if (g_flags.dry_run) {
         printf("Would build %s from source in %s\n", name, build_dir);
@@ -63,7 +63,7 @@ static int install_source(const char *name, const char *version, const char *cac
     if (recipe_data && strstr(recipe_data, "network = true")) allow_network = 1;
     free(recipe_data);
 
-    ret = sandbox_build(recipe_path, build_dir, allow_network);
+    ret = sandbox_build(recipe_path, build_dir, allow_network, NULL);
     if (ret != 0) { warn("Build failed for %s (exit %d)", name, ret); return -1; }
 
     char install_dir[FLASH_PATH_MAX];

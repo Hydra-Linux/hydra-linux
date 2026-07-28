@@ -13,6 +13,11 @@ int cmd_remove(int argc, char **argv) {
             continue;
         }
 
+        if (db_is_held(name) && !g_flags.force) {
+            warn("%s is held, skipping. Use --force to override.", name);
+            continue;
+        }
+
         sqlite3_stmt *stmt;
         const char *sql = "SELECT COUNT(*) FROM dependencies WHERE dep_name = ?1";
         int revdeps = 0;
@@ -31,13 +36,13 @@ int cmd_remove(int argc, char **argv) {
         if (!g_flags.quiet)
             print_status(1, "remove", name);
 
-        if (!confirm("Proceed with removal?")) {
-            if (!g_flags.quiet) print_status(0, "skip", name);
+        if (g_flags.dry_run) {
+            printf("Would remove: %s\n", name);
             continue;
         }
 
-        if (g_flags.dry_run) {
-            printf("Would remove: %s\n", name);
+        if (!confirm("Proceed with removal?")) {
+            if (!g_flags.quiet) print_status(0, "skip", name);
             continue;
         }
 

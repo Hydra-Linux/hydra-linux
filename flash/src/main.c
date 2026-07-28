@@ -29,7 +29,7 @@ int config_load(const char *path, Config *cfg) {
     char *line = data;
     while (line && *line) {
         while (*line == ' ' || *line == '\t' || *line == '\n' || *line == '\r') line++;
-        if (!*line || *line == '#') { while (*line && *line != '\n') line++; if (*line) line++; continue; }
+        if (!*line || *line == '#' || *line == '[') { while (*line && *line != '\n') line++; if (*line) line++; continue; }
 
         char *next = strchr(line, '\n');
         char *eq = strchr(line, '=');
@@ -58,7 +58,7 @@ int config_load(const char *path, Config *cfg) {
         memcpy(val_buf, vp, vallen); val_buf[vallen] = 0;
 
         if (strcmp(key_buf, "root") == 0) { free(cfg->root); cfg->root = strdup_safe(val_buf); }
-        else if (strcmp(key_buf, "db_path") == 0) { free(cfg->db_path); cfg->db_path = strdup_safe(val_buf); }
+        else if (strcmp(key_buf, "db") == 0 || strcmp(key_buf, "db_path") == 0) { free(cfg->db_path); cfg->db_path = strdup_safe(val_buf); }
         else if (strcmp(key_buf, "cache_dir") == 0) { free(cfg->cache_dir); cfg->cache_dir = strdup_safe(val_buf); }
         else if (strcmp(key_buf, "build_dir") == 0) { free(cfg->build_dir); cfg->build_dir = strdup_safe(val_buf); }
         else if (strcmp(key_buf, "recipes_dir") == 0) { free(cfg->recipes_dir); cfg->recipes_dir = strdup_safe(val_buf); }
@@ -74,6 +74,88 @@ int config_load(const char *path, Config *cfg) {
     }
 
     free(data);
+    return 0;
+}
+
+char *fetch_sources(const char *recipe_path, const char *dest_dir) {
+    char cmd[8192];
+    char urls[32768] = {0};
+
+    snprintf(cmd, sizeof(cmd),
+        "bash -c 'source \"%s\" 2>/dev/null; for _s in \"${source[@]}\"; do echo \"$_s\"; done' 2>/dev/null",
+        recipe_path);
+
+    FILE *fp = popen(cmd, "r");
+    if (!fp) return NULL;
+
+    int total = 0;
+    char line[4096];
+    int any = 0;
+    while (fgets(line, sizeof(line), fp)) {
+        size_t len = strlen(line);
+        while (len > 0 && (line[len-1] == '\n' || line[len-1] == '\r')) line[--len] = 0;
+        if (len == 0) continue;
+        any = 1;
+
+        char fname[1024];
+        const char *base = strrchr(line, '/');
+        if (base) base++; else base = line;
+        snprintf(fname, sizeof(fname), "%s/%s", dest_dir, base);
+
+        if (!g_flags.quiet) print_status(1, "source", base);
+        if (access(fname, F_OK) != 0) {
+            fetch_url(line, fname);
+        } else if (g_flags.verbose) {
+            print_status(1, "cached", fname);
+        }
+
+        int need = snprintf(urls + total, sizeof(urls) - (size_t)total, "%s ", fname);
+        if (need > 0) total += need;
+    }
+    int rc = pclose(fp);
+    (void)rc;
+
+    if (!any) return NULL;
+    return strdup_safe(dest_dir);
+}
+
+static void write_filelist_rec(FILE *f, const char *base, const char *rel) {
+    char path[FLASH_PATH_MAX];
+    snprintf(path, sizeof(path), "%s/%s", base, rel && *rel ? rel : ".");
+
+    DIR *d = opendir(path);
+    if (!d) return;
+
+    struct dirent *de;
+    while ((de = readdir(d)) != NULL) {
+        if (strcmp(de->d_name, ".") == 0 || strcmp(de->d_name, "..") == 0) continue;
+        char full[FLASH_PATH_MAX];
+        snprintf(full, sizeof(full), "%s/%s", path, de->d_name);
+        struct stat st;
+        if (lstat(full, &st) < 0) continue;
+
+        char prefix[FLASH_PATH_MAX];
+        if (rel && *rel) snprintf(prefix, sizeof(prefix), "/%s/%s", rel, de->d_name);
+        else snprintf(prefix, sizeof(prefix), "/%s", de->d_name);
+
+        if (S_ISDIR(st.st_mode)) {
+            fprintf(f, "%s/\n", prefix);
+            char sub[FLASH_PATH_MAX];
+            if (rel && *rel) snprintf(sub, sizeof(sub), "%s/%s", rel, de->d_name);
+            else snprintf(sub, sizeof(sub), "%s", de->d_name);
+            write_filelist_rec(f, base, sub);
+        } else if (S_ISREG(st.st_mode) || S_ISLNK(st.st_mode)) {
+            fprintf(f, "%s\n", prefix);
+        }
+    }
+    closedir(d);
+}
+
+static int write_filelist(const char *pkgdir, const char *output_path) {
+    FILE *f = fopen(output_path, "w");
+    if (!f) return -1;
+    write_filelist_rec(f, pkgdir, "");
+    fclose(f);
     return 0;
 }
 
@@ -139,6 +221,10 @@ int recipe_parse(const char *recipe_path, Package *pkg, Dependency **deps, int *
             int dtype = (strcmp(key_buf, "build_depends") == 0) ? 1 : 0;
             char *d = strdup_safe(val_buf);
             if (d) {
+                /* Skip empty () or ( arrays */
+                char *dt = d;
+                while (*dt == ' ' || *dt == '\t') dt++;
+                if (*dt != '(') {
                 char *dpstart = d;
                 while (dpstart && *dpstart) {
                     while (*dpstart == ' ' || *dpstart == ',') dpstart++;
@@ -163,6 +249,7 @@ int recipe_parse(const char *recipe_path, Package *pkg, Dependency **deps, int *
                     (*ndeps)++;
                     if (end) dpstart = end + 1;
                     else break;
+                }
                 }
                 free(d);
             }
@@ -373,9 +460,17 @@ int cmd_make(int argc, char **argv) {
         char build_dir[FLASH_PATH_MAX], recipe_dest[FLASH_PATH_MAX];
         char script_path[FLASH_PATH_MAX], pkgdir_path[FLASH_PATH_MAX];
         char pkg_cache_path[FLASH_PATH_MAX], hash[65];
-        int ret, allow_network;
+        char filelist_path[FLASH_PATH_MAX], recipe_path[FLASH_PATH_MAX];
+        int ret, allow_network, has_sources = 0;
 
-        if (recipe_parse(argv[i], &pkg, &deps, &ndeps) != 0) {
+        struct stat rst;
+        if (stat(argv[i], &rst) == 0 && S_ISDIR(rst.st_mode)) {
+            snprintf(recipe_path, sizeof(recipe_path), "%s/recipe.sh", argv[i]);
+        } else {
+            snprintf(recipe_path, sizeof(recipe_path), "%s", argv[i]);
+        }
+
+        if (recipe_parse(recipe_path, &pkg, &deps, &ndeps) != 0) {
             warn("Cannot parse recipe: %s", argv[i]);
             continue;
         }
@@ -386,34 +481,68 @@ int cmd_make(int argc, char **argv) {
 
         if (!g_flags.quiet) print_status(1, "make", pkg.name);
 
+        /* Build build dependencies first */
+        for (int j = 0; j < ndeps; j++) {
+            if (deps[j].type != 1) continue;
+            char dep_recipe[FLASH_PATH_MAX];
+            snprintf(dep_recipe, sizeof(dep_recipe), "%s/%s/recipe.sh",
+                     g_config.recipes_dir, deps[j].name);
+            if (access(dep_recipe, F_OK) != 0) {
+                warn("Dependency recipe not found: %s", dep_recipe);
+                goto make_cleanup;
+            }
+            if (db_open() == 0 && db_package_exists(deps[j].name)) {
+                if (g_flags.verbose) print_status(1, "dep-ok", deps[j].name);
+            } else {
+                if (!g_flags.quiet) print_status(1, "dep", deps[j].name);
+                int argc2 = 1;
+                char *argv2[] = { dep_recipe };
+                if (cmd_make(argc2, argv2) != 0) {
+                    warn("Dependency build failed: %s", deps[j].name);
+                    goto make_cleanup;
+                }
+            }
+        }
+
         snprintf(build_dir, sizeof(build_dir), "%s/%s-%s", g_config.build_dir, pkg.name, pkg.version);
         mkdir_p(build_dir);
 
         snprintf(recipe_dest, sizeof(recipe_dest), "%s/recipe.sh", build_dir);
-        if (copy_file_to(argv[i], recipe_dest) != 0) {
+        if (copy_file_to(recipe_path, recipe_dest) != 0) {
             warn("Cannot copy recipe to build dir");
             goto make_cleanup;
         }
 
+        /* Check for source=() in recipe */
+        char *recipe_data = read_file(recipe_path);
+        if (recipe_data) {
+            if (strstr(recipe_data, "source=(")) has_sources = 1;
+            free(recipe_data);
+        }
+
+        /* Fetch sources before sandbox */
+        char *src_dir = NULL;
+        if (has_sources) {
+            char src_cache[FLASH_PATH_MAX];
+            snprintf(src_cache, sizeof(src_cache), "%s/src_cache", build_dir);
+            mkdir_p(src_cache);
+            src_dir = fetch_sources(recipe_dest, src_cache);
+        }
+
         snprintf(script_path, sizeof(script_path), "%s/.flash_build.sh", build_dir);
-        if (generate_build_script(script_path, argv[i], build_dir, pkg.name, pkg.version) != 0) {
+        if (generate_build_script(script_path, recipe_path, build_dir, pkg.name, pkg.version) != 0) {
             warn("Cannot generate build script");
+            free(src_dir);
             goto make_cleanup;
         }
 
-        allow_network = 0;
-        if (strstr(pkg.desc ? pkg.desc : "", "network") ||
-            strstr(pkg.license ? pkg.license : "", "network")) {
-            allow_network = 1;
-        }
-        for (int j = 0; j < ndeps; j++) {
-            if (strstr(deps[j].name ? deps[j].name : "", "network")) {
-                allow_network = 1;
-                break;
-            }
+        allow_network = !g_config.sandbox;
+        if (!has_sources && !allow_network) {
+            allow_network = 0;
         }
 
-        ret = sandbox_build(recipe_dest, build_dir, allow_network);
+        ret = sandbox_build(recipe_dest, build_dir, allow_network, src_dir);
+        free(src_dir);
         if (ret != 0) {
             warn("Build failed for %s (exit %d)", pkg.name, ret);
             goto make_cleanup;
@@ -430,6 +559,11 @@ int cmd_make(int argc, char **argv) {
         mkdir_p(g_config.cache_dir);
         archive_create(pkgdir_path, pkg_cache_path, NULL, 0);
 
+        /* Generate .files manifest */
+        snprintf(filelist_path, sizeof(filelist_path), "%s/%s-%s.files",
+                 g_config.cache_dir, pkg.name, pkg.version);
+        write_filelist(pkgdir_path, filelist_path);
+
         if (g_config.sign) crypto_sign(pkg_cache_path, NULL);
 
         if (crypto_checksum(pkg_cache_path, hash, sizeof(hash)) == 0) {
@@ -439,7 +573,22 @@ int cmd_make(int argc, char **argv) {
 
         if (db_open() == 0) {
             db_package_insert(&pkg);
+            /* Register dependencies in DB */
+            for (int j = 0; j < ndeps; j++) {
+                db_depends_insert(pkg.name, &deps[j]);
+            }
             db_transaction_log("make", pkg.name, pkg.version);
+            /* Register files in DB */
+            char *fdata = read_file(filelist_path);
+            if (fdata) {
+                char *fl = fdata, *fnl;
+                while ((fnl = strchr(fl, '\n')) != NULL) {
+                    *fnl = 0;
+                    if (*fl) db_file_insert(pkg.name, fl);
+                    fl = fnl + 1;
+                }
+                free(fdata);
+            }
         }
 
         if (!g_flags.quiet) print_status(1, "built", pkg.name);
@@ -503,8 +652,8 @@ int cmd_audit(int argc, char **argv) {
 
 int cmd_cache(int argc, char **argv) {
     if (argc > 0 && strcmp(argv[0], "clean") == 0) {
-        if (!confirm("Clean package cache?")) return 1;
         if (g_flags.dry_run) { printf("Would clean %s\n", g_config.cache_dir); return 0; }
+        if (!confirm("Clean package cache?")) return 1;
         char cmd[4096];
         snprintf(cmd, sizeof(cmd), "rm -rf '%s'/*", g_config.cache_dir);
         int rc = system(cmd); (void)rc;
@@ -545,7 +694,7 @@ int cmd_config(int argc, char **argv) {
         char *key = argv[0];
         char *val = argv[1];
         if (strcmp(key, "root") == 0) { free(g_config.root); g_config.root = strdup_safe(val); }
-        else if (strcmp(key, "db_path") == 0) { free(g_config.db_path); g_config.db_path = strdup_safe(val); }
+        else if (strcmp(key, "db") == 0 || strcmp(key, "db_path") == 0) { free(g_config.db_path); g_config.db_path = strdup_safe(val); }
         else if (strcmp(key, "cache_dir") == 0) { free(g_config.cache_dir); g_config.cache_dir = strdup_safe(val); }
         else if (strcmp(key, "build_dir") == 0) { free(g_config.build_dir); g_config.build_dir = strdup_safe(val); }
         else if (strcmp(key, "recipes_dir") == 0) { free(g_config.recipes_dir); g_config.recipes_dir = strdup_safe(val); }
@@ -760,7 +909,12 @@ static int dispatch(Command cmd, int argc, char **argv) {
 int main(int argc, char **argv) {
     if (argc < 2) { print_usage(); return 1; }
 
-    config_load(FLASH_CONF_PATH, &g_config);
+    /* Quiet initial load; --config flag overrides later */
+    {
+        char *old = read_file(FLASH_CONF_PATH);
+        if (old) { free(old); config_load(FLASH_CONF_PATH, &g_config); }
+        else config_default(&g_config);
+    }
 
     int nargs = parse_flags(argc, argv, &g_flags);
     if (nargs < 2) { print_usage(); return 1; }

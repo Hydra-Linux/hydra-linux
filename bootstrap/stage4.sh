@@ -6,7 +6,10 @@ echo -e "${YELLOW}[Hydra] Stage 4: Building flash package manager${RESET}"
 
 if [ "$EUID" -ne 0 ]; then echo "Please run as root"; exit 1; fi
 
-cd /home/oliwier/hydra-linux/flash
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+
+cd "$PROJECT_DIR/flash"
 make clean 2>/dev/null || true
 make -j$JOBS
 
@@ -46,7 +49,7 @@ flash config init 2>/dev/null || true
 
 echo -e "${YELLOW}Building packages with flash...${RESET}"
 
-cd /home/oliwier/hydra-linux/recipes
+cd "$PROJECT_DIR/recipes"
 
 for recipe in base/*/recipe.sh; do
   pkg=$(basename $(dirname $recipe))

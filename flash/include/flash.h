@@ -166,7 +166,7 @@ extern sqlite3 *g_db;
 
 int vercmp(const char *a, const char *b);
 
-int sandbox_build(const char *recipe_path, const char *build_dir, int allow_network);
+int sandbox_build(const char *recipe_path, const char *build_dir, int allow_network, const char *src_dir);
 
 int archive_extract(const char *path, const char *destdir);
 int archive_create(const char *srcdir, const char *output_path, char **excludes, int nexcludes);

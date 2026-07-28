@@ -2,72 +2,45 @@ SHELL := /bin/bash
 ROOT_DIR := $(patsubst %/,%,$(dir $(abspath $(lastword $(MAKEFILE_LIST)))))
 include $(ROOT_DIR)/config.mk
 
-.PHONY: all clean distclean \
-        toolchain kernel busybox openrc grub \
-        rootfs iso hpm \
-        help
+.PHONY: all flash test lint clean help
 
-all: toolchain kernel busybox openrc grub hpm rootfs iso
+all: flash lint
 
 help:
 	@echo "Hydra Linux Build System"
 	@echo "======================="
 	@echo "Targets:"
-	@echo "  all         - Build everything"
-	@echo "  toolchain   - Build cross-compilation toolchain"
-	@echo "  kernel      - Build Linux kernel"
-	@echo "  busybox     - Build BusyBox"
-	@echo "  openrc      - Build OpenRC init system"
-	@echo "  grub        - Build GRUB bootloader (EFI)"
-	@echo "  hpm         - Build Hydra Package Manager"
-	@echo "  rootfs      - Assemble root filesystem"
-	@echo "  iso         - Generate EFI-bootable ISO"
+	@echo "  all         - Build flash + lint (default)"
+	@echo "  flash       - Build flash package manager"
+	@echo "  test        - Run flash test suite"
+	@echo "  lint        - Check recipe syntax"
 	@echo "  clean       - Clean build artifacts"
-	@echo "  distclean   - Full cleanup (incl. downloads)"
+	@echo ""
+	@echo "Legacy (cross-compilation):"
+	@echo "  toolchain   - Build cross-compilation toolchain (stage 0-2)"
+	@echo "  base        - Build base system (stage 3)"
+	@echo "  bootstrap   - Run full bootstrap pipeline"
+	@echo ""
+	@echo "See bootstrap/build-all.sh for the legacy pipeline."
 
-# ---------------------------------------------------------------------------
-# Toolchain
-# ---------------------------------------------------------------------------
-toolchain:
-	@$(MAKE) -f $(BUILD_DIR)/toolchain.mk
+flash:
+	@$(MAKE) -C flash
 
-# ---------------------------------------------------------------------------
-# Components
-# ---------------------------------------------------------------------------
-kernel:
-	@$(MAKE) -f $(BUILD_DIR)/kernel.mk
+test: flash
+	cd tests && bash test_flash.sh
 
-busybox:
-	@$(MAKE) -f $(BUILD_DIR)/busybox.mk
+lint:
+	@errors=0; \
+	for f in recipes/*/*/recipe.sh; do \
+		if bash -n "$$f" 2>/dev/null; then \
+			echo "  OK: $$f"; \
+		else \
+			echo "  FAIL: $$f"; \
+			errors=$$((errors + 1)); \
+		fi; \
+	done; \
+	[ "$$errors" -eq 0 ] && echo "All recipes OK" || (echo "$$errors recipe(s) failed"; exit 1)
 
-openrc:
-	@$(MAKE) -f $(BUILD_DIR)/openrc.mk
-
-grub:
-	@$(MAKE) -f $(BUILD_DIR)/grub.mk
-
-hpm:
-	@$(MAKE) -f $(BUILD_DIR)/hpm.mk
-
-# ---------------------------------------------------------------------------
-# Rootfs assembly
-# ---------------------------------------------------------------------------
-rootfs: kernel busybox openrc hpm
-	@$(MAKE) -f $(BUILD_DIR)/rootfs.mk
-
-# ---------------------------------------------------------------------------
-# ISO generation
-# ---------------------------------------------------------------------------
-iso: rootfs
-	@$(MAKE) -f $(BUILD_DIR)/iso.mk
-
-# ---------------------------------------------------------------------------
-# Cleanup
-# ---------------------------------------------------------------------------
 clean:
-	rm -rf $(OUTPUT_DIR)/*
-	rm -rf $(HPM_DIR)/*.egg-info $(HPM_DIR)/build $(HPM_DIR)/dist
-
-distclean: clean
-	rm -rf $(SOURCES_DIR)/*
-	rm -rf $(BUILD_DIR)/*.stamp
+	rm -rf $(ROOT_DIR)/build/out
+	$(MAKE) -C flash clean
