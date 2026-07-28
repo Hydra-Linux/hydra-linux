@@ -78,8 +78,8 @@ int parse_flags(int argc, char **argv, Flags *flags) {
             else if (strcmp(arg, "--verbose") == 0 || strcmp(arg, "-v") == 0) flags->verbose = 1;
             else if (strcmp(arg, "--json") == 0) flags->json = 1;
             else if (strcmp(arg, "--help") == 0 || strcmp(arg, "-h") == 0) { print_usage(); exit(0); }
-            else if (strcmp(arg, "--root") == 0 && j + 1 < argc) {
-                flags->root = argv[++j];
+            else if (strcmp(arg, "--config") == 0 && j + 1 < argc) {
+                config_load(argv[++j], &g_config);
             } else {
                 warn("Unknown flag: %s", arg);
             }

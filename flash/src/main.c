@@ -31,36 +31,46 @@ int config_load(const char *path, Config *cfg) {
         while (*line == ' ' || *line == '\t' || *line == '\n' || *line == '\r') line++;
         if (!*line || *line == '#') { while (*line && *line != '\n') line++; if (*line) line++; continue; }
 
+        char *next = strchr(line, '\n');
         char *eq = strchr(line, '=');
-        if (!eq) { while (*line && *line != '\n') line++; if (*line) line++; continue; }
+        if (!eq || (next && eq > next)) {
+            if (next) { line = next + 1; continue; }
+            else break;
+        }
 
-        *eq = 0;
-        char *key = line;
-        char *val = eq + 1;
-        while (*key == ' ' || *key == '\t') key++;
-        char *ke = key + strlen(key) - 1;
-        while (ke > key && (*ke == ' ' || *ke == '\t')) *ke-- = 0;
-        while (*val == ' ' || *val == '\t') val++;
-        char *ve = val + strlen(val) - 1;
-        while (ve > val && (*ve == ' ' || *ve == '\t' || *ve == '\n' || *ve == '\r')) *ve-- = 0;
-        if (*val == '"') { val++; ve = val + strlen(val) - 1; if (*ve == '"') *ve = 0; }
+        size_t vallen;
+        char key_buf[256], val_buf[1024];
+        const char *kp = line;
+        while (kp < eq && (*kp == ' ' || *kp == '\t')) kp++;
+        size_t klen = eq - kp;
+        while (klen > 0 && (kp[klen-1] == ' ' || kp[klen-1] == '\t')) klen--;
+        if (klen >= sizeof(key_buf)) klen = sizeof(key_buf) - 1;
+        memcpy(key_buf, kp, klen); key_buf[klen] = 0;
 
-        if (strcmp(key, "root") == 0) { free(cfg->root); cfg->root = strdup_safe(val); }
-        else if (strcmp(key, "db_path") == 0) { free(cfg->db_path); cfg->db_path = strdup_safe(val); }
-        else if (strcmp(key, "cache_dir") == 0) { free(cfg->cache_dir); cfg->cache_dir = strdup_safe(val); }
-        else if (strcmp(key, "build_dir") == 0) { free(cfg->build_dir); cfg->build_dir = strdup_safe(val); }
-        else if (strcmp(key, "recipes_dir") == 0) { free(cfg->recipes_dir); cfg->recipes_dir = strdup_safe(val); }
-        else if (strcmp(key, "keyring") == 0) { free(cfg->keyring); cfg->keyring = strdup_safe(val); }
-        else if (strcmp(key, "sandbox") == 0) cfg->sandbox = atoi(val);
-        else if (strcmp(key, "jobs") == 0) cfg->jobs = atoi(val);
-        else if (strcmp(key, "sign") == 0) cfg->sign = atoi(val);
-        else if (strcmp(key, "source_threshold") == 0) cfg->source_threshold = atol(val);
-        else if (strcmp(key, "binary_threshold") == 0) cfg->binary_threshold = atol(val);
-        else if (strcmp(key, "repo_url") == 0) { free(cfg->repo_url); cfg->repo_url = strdup_safe(val); }
+        const char *vp = eq + 1;
+        while (*vp == ' ' || *vp == '\t') vp++;
+        if (next) vallen = next - vp;
+        else vallen = strlen(vp);
+        while (vallen > 0 && (vp[vallen-1] == ' ' || vp[vallen-1] == '\t' ||
+               vp[vallen-1] == '\n' || vp[vallen-1] == '\r')) vallen--;
+        if (*vp == '"' && vallen >= 2 && vp[vallen-1] == '"') { vp++; vallen -= 2; }
+        if (vallen >= sizeof(val_buf)) vallen = sizeof(val_buf) - 1;
+        memcpy(val_buf, vp, vallen); val_buf[vallen] = 0;
 
-        *eq = '=';
-        while (*line && *line != '\n') line++;
-        if (*line) line++;
+        if (strcmp(key_buf, "root") == 0) { free(cfg->root); cfg->root = strdup_safe(val_buf); }
+        else if (strcmp(key_buf, "db_path") == 0) { free(cfg->db_path); cfg->db_path = strdup_safe(val_buf); }
+        else if (strcmp(key_buf, "cache_dir") == 0) { free(cfg->cache_dir); cfg->cache_dir = strdup_safe(val_buf); }
+        else if (strcmp(key_buf, "build_dir") == 0) { free(cfg->build_dir); cfg->build_dir = strdup_safe(val_buf); }
+        else if (strcmp(key_buf, "recipes_dir") == 0) { free(cfg->recipes_dir); cfg->recipes_dir = strdup_safe(val_buf); }
+        else if (strcmp(key_buf, "keyring") == 0) { free(cfg->keyring); cfg->keyring = strdup_safe(val_buf); }
+        else if (strcmp(key_buf, "sandbox") == 0) cfg->sandbox = atoi(val_buf);
+        else if (strcmp(key_buf, "jobs") == 0) cfg->jobs = atoi(val_buf);
+        else if (strcmp(key_buf, "sign") == 0) cfg->sign = atoi(val_buf);
+        else if (strcmp(key_buf, "source_threshold") == 0) cfg->source_threshold = atol(val_buf);
+        else if (strcmp(key_buf, "binary_threshold") == 0) cfg->binary_threshold = atol(val_buf);
+        else if (strcmp(key_buf, "repo_url") == 0) { free(cfg->repo_url); cfg->repo_url = strdup_safe(val_buf); }
+
+        line = next ? next + 1 : NULL;
     }
 
     free(data);
@@ -93,61 +103,72 @@ int recipe_parse(const char *recipe_path, Package *pkg, Dependency **deps, int *
         while (*line == ' ' || *line == '\t' || *line == '\n' || *line == '\r') line++;
         if (!*line || *line == '#') { while (*line && *line != '\n') line++; if (*line) line++; continue; }
 
+        char *next = strchr(line, '\n');
         char *eq = strchr(line, '=');
-        if (!eq) { while (*line && *line != '\n') line++; if (*line) line++; continue; }
-        *eq = 0;
-        char *key = line;
-        char *val = eq + 1;
-        while (*key == ' ' || *key == '\t') key++;
-        char *ke = key + strlen(key) - 1;
-        while (ke > key && (*ke == ' ' || *ke == '\t')) *ke-- = 0;
-        while (*val == ' ' || *val == '\t') val++;
-        char *ve = val + strlen(val) - 1;
-        while (ve > val && (*ve == ' ' || *ve == '\t' || *ve == '\n' || *ve == '\r')) *ve-- = 0;
-        if (*val == '"') { val++; ve = val + strlen(val) - 1; if (*ve == '"') *ve = 0; }
+        if (!eq || (next && eq > next)) { line = next ? next + 1 : NULL; continue; }
 
-        if (strcmp(key, "name") == 0) pkg->name = strdup_safe(val);
-        else if (strcmp(key, "version") == 0) pkg->version = strdup_safe(val);
-        else if (strcmp(key, "release") == 0) pkg->release = atoi(val);
-        else if (strcmp(key, "desc") == 0) pkg->desc = strdup_safe(val);
-        else if (strcmp(key, "license") == 0) pkg->license = strdup_safe(val);
-        else if (strcmp(key, "maintainer") == 0) pkg->maintainer = strdup_safe(val);
-        else if (strcmp(key, "homepage") == 0) pkg->homepage = strdup_safe(val);
-        else if (strcmp(key, "size") == 0) pkg->size = atol(val);
-        else if (strcmp(key, "checksum") == 0) pkg->checksum = strdup_safe(val);
-        else if (strcmp(key, "depends") == 0 || strcmp(key, "build_depends") == 0) {
-            int dtype = (strcmp(key, "build_depends") == 0) ? 1 : 0;
-            char *d = val;
-            while (d && *d) {
-                while (*d == ' ' || *d == ',') d++;
-                if (!*d) break;
-                char *end = strchr(d, ',');
-                if (end) *end = 0;
-                char *space = strchr(d, ' ');
-                if (*ndeps >= depcap) {
-                    depcap = depcap ? depcap * 2 : 8;
-                    *deps = realloc(*deps, sizeof(Dependency) * depcap);
+        size_t vallen;
+        char key_buf[256], val_buf[2048];
+        const char *kp = line;
+        while (kp < eq && (*kp == ' ' || *kp == '\t')) kp++;
+        size_t klen = eq - kp;
+        while (klen > 0 && (kp[klen-1] == ' ' || kp[klen-1] == '\t')) klen--;
+        if (klen >= sizeof(key_buf)) klen = sizeof(key_buf) - 1;
+        memcpy(key_buf, kp, klen); key_buf[klen] = 0;
+
+        const char *vp = eq + 1;
+        while (*vp == ' ' || *vp == '\t') vp++;
+        if (next) vallen = next - vp;
+        else vallen = strlen(vp);
+        while (vallen > 0 && (vp[vallen-1] == ' ' || vp[vallen-1] == '\t' ||
+               vp[vallen-1] == '\n' || vp[vallen-1] == '\r')) vallen--;
+        if (*vp == '"' && vallen >= 2 && vp[vallen-1] == '"') { vp++; vallen -= 2; }
+        if (vallen >= sizeof(val_buf)) vallen = sizeof(val_buf) - 1;
+        memcpy(val_buf, vp, vallen); val_buf[vallen] = 0;
+
+        if (strcmp(key_buf, "name") == 0) pkg->name = strdup_safe(val_buf);
+        else if (strcmp(key_buf, "version") == 0) pkg->version = strdup_safe(val_buf);
+        else if (strcmp(key_buf, "release") == 0) pkg->release = atoi(val_buf);
+        else if (strcmp(key_buf, "desc") == 0) pkg->desc = strdup_safe(val_buf);
+        else if (strcmp(key_buf, "license") == 0) pkg->license = strdup_safe(val_buf);
+        else if (strcmp(key_buf, "maintainer") == 0) pkg->maintainer = strdup_safe(val_buf);
+        else if (strcmp(key_buf, "homepage") == 0) pkg->homepage = strdup_safe(val_buf);
+        else if (strcmp(key_buf, "size") == 0) pkg->size = atol(val_buf);
+        else if (strcmp(key_buf, "checksum") == 0) pkg->checksum = strdup_safe(val_buf);
+        else if (strcmp(key_buf, "depends") == 0 || strcmp(key_buf, "build_depends") == 0) {
+            int dtype = (strcmp(key_buf, "build_depends") == 0) ? 1 : 0;
+            char *d = strdup_safe(val_buf);
+            if (d) {
+                char *dpstart = d;
+                while (dpstart && *dpstart) {
+                    while (*dpstart == ' ' || *dpstart == ',') dpstart++;
+                    if (!*dpstart) break;
+                    char *end = strchr(dpstart, ',');
+                    if (end) *end = 0;
+                    char *space = strchr(dpstart, ' ');
+                    if (*ndeps >= depcap) {
+                        depcap = depcap ? depcap * 2 : 8;
+                        *deps = realloc(*deps, sizeof(Dependency) * depcap);
+                    }
+                    Dependency *dp = &(*deps)[*ndeps];
+                    memset(dp, 0, sizeof(Dependency));
+                    dp->type = dtype;
+                    if (space) {
+                        *space = 0;
+                        dp->name = strdup_safe(dpstart);
+                        dp->constraint = strdup_safe(space + 1);
+                    } else {
+                        dp->name = strdup_safe(dpstart);
+                    }
+                    (*ndeps)++;
+                    if (end) dpstart = end + 1;
+                    else break;
                 }
-                Dependency *dp = &(*deps)[*ndeps];
-                memset(dp, 0, sizeof(Dependency));
-                dp->type = dtype;
-                if (space) {
-                    *space = 0;
-                    dp->name = strdup_safe(d);
-                    dp->constraint = strdup_safe(space + 1);
-                    *space = ' ';
-                } else {
-                    dp->name = strdup_safe(d);
-                }
-                (*ndeps)++;
-                if (end) { *end = ','; d = end + 1; }
-                else break;
+                free(d);
             }
         }
 
-        *eq = '=';
-        while (*line && *line != '\n') line++;
-        if (*line) line++;
+        line = next ? next + 1 : NULL;
     }
 
     free(data);
@@ -275,56 +296,155 @@ int cmd_find_owner(int argc, char **argv) {
     return 0;
 }
 
+static int generate_build_script(const char *script_path, const char *recipe_path,
+                                  const char *build_dir, const char *name, const char *version) {
+    char *recipe_data = read_file(recipe_path);
+    if (!recipe_data) { warn("Cannot read recipe: %s", recipe_path); return -1; }
+
+    int has_prepare = (strstr(recipe_data, "prepare()") != NULL) ||
+                      (strstr(recipe_data, "prepare (") != NULL);
+    int has_build = (strstr(recipe_data, "build()") != NULL) ||
+                    (strstr(recipe_data, "build (") != NULL);
+    int has_install = (strstr(recipe_data, "install()") != NULL) ||
+                      (strstr(recipe_data, "install (") != NULL);
+    int has_check = (strstr(recipe_data, "check()") != NULL) ||
+                    (strstr(recipe_data, "check (") != NULL);
+    free(recipe_data);
+
+    int use_sandbox = g_config.sandbox;
+    const char *base = use_sandbox ? "/build" : build_dir;
+    const char *src_sub = "/src";
+    const char *pkg_sub = "/pkgdir";
+
+    FILE *f = fopen(script_path, "w");
+    if (!f) { warn("Cannot write build script: %s", script_path); return -1; }
+
+    fprintf(f, "#!/bin/bash -e\n");
+    fprintf(f, "# flash build script for %s-%s\n", name, version);
+    fprintf(f, "export srcdir=\"%s%s\"\n", base, src_sub);
+    fprintf(f, "export pkgdir=\"%s%s\"\n", base, pkg_sub);
+    fprintf(f, "export scriptdir=\"%s\"\n", base);
+    fprintf(f, "export version=\"%s\"\n", version);
+    fprintf(f, "mkdir -p \"$srcdir\" \"$pkgdir\"\n");
+    fprintf(f, "source \"%s/recipe.sh\"\n", base);
+    fprintf(f, "cd \"$srcdir\"\n");
+    fprintf(f, "echo \"==> Preparing build dir...\"\n");
+
+    if (has_prepare) {
+        fprintf(f, "echo \"==> Preparing %s...\"\n", name);
+        fprintf(f, "prepare 2>&1 | tee -a %s/build.log\n", base);
+    }
+    if (has_build) {
+        fprintf(f, "echo \"==> Building %s...\"\n", name);
+        fprintf(f, "cd \"$srcdir\"\n");
+        fprintf(f, "build 2>&1 | tee -a %s/build.log\n", base);
+    }
+    if (has_install) {
+        fprintf(f, "echo \"==> Installing %s...\"\n", name);
+        fprintf(f, "cd \"$srcdir\"\n");
+        fprintf(f, "install 2>&1 | tee -a %s/build.log\n", base);
+    }
+    if (has_check) {
+        fprintf(f, "echo \"==> Checking %s...\"\n", name);
+        fprintf(f, "cd \"$srcdir\"\n");
+        fprintf(f, "check 2>&1 | tee -a %s/build.log\n", base);
+    }
+
+    fprintf(f, "echo \"==> Build complete: %s-%s\"\n", name, version);
+    fclose(f);
+    chmod(script_path, 0755);
+    return 0;
+}
+
+static int copy_file_to(const char *src, const char *dst) {
+    char *data = read_file(src);
+    if (!data) return -1;
+    int ret = write_file(dst, data);
+    free(data);
+    return ret;
+}
+
 int cmd_make(int argc, char **argv) {
     if (argc == 0) { warn("No recipe specified"); return 1; }
     for (int i = 0; i < argc; i++) {
         Package pkg;
         Dependency *deps = NULL;
         int ndeps = 0;
+        char build_dir[FLASH_PATH_MAX], recipe_dest[FLASH_PATH_MAX];
+        char script_path[FLASH_PATH_MAX], pkgdir_path[FLASH_PATH_MAX];
+        char pkg_cache_path[FLASH_PATH_MAX], hash[65];
+        int ret, allow_network;
+
         if (recipe_parse(argv[i], &pkg, &deps, &ndeps) != 0) {
             warn("Cannot parse recipe: %s", argv[i]);
             continue;
         }
         if (!pkg.name || !pkg.version) {
             warn("Recipe %s missing name or version", argv[i]);
-            free(pkg.name); free(pkg.version); free(pkg.desc);
-            free(pkg.license); free(pkg.maintainer); free(pkg.homepage);
-            free(pkg.checksum);
-            for (int j = 0; j < ndeps; j++) { free(deps[j].name); free(deps[j].version); free(deps[j].constraint); }
-            free(deps);
-            continue;
+            goto make_cleanup;
         }
 
         if (!g_flags.quiet) print_status(1, "make", pkg.name);
 
-        char build_dir[4096];
         snprintf(build_dir, sizeof(build_dir), "%s/%s-%s", g_config.build_dir, pkg.name, pkg.version);
         mkdir_p(build_dir);
 
-        int ret = sandbox_build(argv[i], build_dir, 0);
-        if (ret != 0) {
-            warn("Build failed for %s (exit %d)", pkg.name, ret);
-        } else {
-            char pkg_path[4096];
-            snprintf(pkg_path, sizeof(pkg_path), "%s/%s-%s.tar.zst",
-                     g_config.cache_dir, pkg.name, pkg.version);
-            mkdir_p(g_config.cache_dir);
-            archive_create(build_dir, pkg_path, NULL, 0);
-            if (g_config.sign) crypto_sign(pkg_path, NULL);
-
-            char hash[65];
-            if (crypto_checksum(pkg_path, hash, sizeof(hash)) == 0) {
-                pkg.checksum = strdup_safe(hash);
-            }
-
-            if (db_open() == 0) {
-                db_package_insert(&pkg);
-                db_transaction_log("make", pkg.name, pkg.version);
-            }
-
-            if (!g_flags.quiet) print_status(1, "built", pkg.name);
+        snprintf(recipe_dest, sizeof(recipe_dest), "%s/recipe.sh", build_dir);
+        if (copy_file_to(argv[i], recipe_dest) != 0) {
+            warn("Cannot copy recipe to build dir");
+            goto make_cleanup;
         }
 
+        snprintf(script_path, sizeof(script_path), "%s/.flash_build.sh", build_dir);
+        if (generate_build_script(script_path, argv[i], build_dir, pkg.name, pkg.version) != 0) {
+            warn("Cannot generate build script");
+            goto make_cleanup;
+        }
+
+        allow_network = 0;
+        if (strstr(pkg.desc ? pkg.desc : "", "network") ||
+            strstr(pkg.license ? pkg.license : "", "network")) {
+            allow_network = 1;
+        }
+        for (int j = 0; j < ndeps; j++) {
+            if (strstr(deps[j].name ? deps[j].name : "", "network")) {
+                allow_network = 1;
+                break;
+            }
+        }
+
+        ret = sandbox_build(recipe_dest, build_dir, allow_network);
+        if (ret != 0) {
+            warn("Build failed for %s (exit %d)", pkg.name, ret);
+            goto make_cleanup;
+        }
+
+        snprintf(pkgdir_path, sizeof(pkgdir_path), "%s/pkgdir", build_dir);
+        if (access(pkgdir_path, F_OK) != 0) {
+            warn("pkgdir not found after build: %s", pkgdir_path);
+            goto make_cleanup;
+        }
+
+        snprintf(pkg_cache_path, sizeof(pkg_cache_path), "%s/%s-%s.tar.zst",
+                 g_config.cache_dir, pkg.name, pkg.version);
+        mkdir_p(g_config.cache_dir);
+        archive_create(pkgdir_path, pkg_cache_path, NULL, 0);
+
+        if (g_config.sign) crypto_sign(pkg_cache_path, NULL);
+
+        if (crypto_checksum(pkg_cache_path, hash, sizeof(hash)) == 0) {
+            free(pkg.checksum);
+            pkg.checksum = strdup_safe(hash);
+        }
+
+        if (db_open() == 0) {
+            db_package_insert(&pkg);
+            db_transaction_log("make", pkg.name, pkg.version);
+        }
+
+        if (!g_flags.quiet) print_status(1, "built", pkg.name);
+
+    make_cleanup:
         free(pkg.name); free(pkg.version); free(pkg.desc);
         free(pkg.license); free(pkg.maintainer); free(pkg.homepage);
         free(pkg.checksum);

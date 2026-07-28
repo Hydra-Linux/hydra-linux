@@ -8,9 +8,12 @@ int sandbox_build(const char *recipe_path, const char *build_dir, int allow_netw
 
     if (!g_config.sandbox) {
         warn("Sandbox disabled, running build without isolation");
+        char script_path[1024];
+        snprintf(script_path, sizeof(script_path), "%s/.flash_build.sh", build_dir);
         pid_t pid = fork();
         if (pid == 0) {
-            execl("/bin/sh", "sh", recipe_path, NULL);
+            if (chdir(build_dir) != 0) _exit(126);
+            execl("/bin/sh", "sh", script_path, NULL);
             _exit(127);
         }
         int status;
@@ -18,9 +21,28 @@ int sandbox_build(const char *recipe_path, const char *build_dir, int allow_netw
         return WIFEXITED(status) ? WEXITSTATUS(status) : -1;
     }
 
-    const char *bwrap = "/usr/bin/bwrap";
-    if (access(bwrap, X_OK) != 0) {
-        die("bubblewrap not found at %s", bwrap);
+    static const char *bwrap_paths[] = {
+        "/usr/bin/bwrap", "/usr/local/bin/bwrap", "/run/current-system/sw/bin/bwrap",
+        NULL
+    };
+    const char *bwrap = NULL;
+    char *bwrap_buf = NULL;
+    for (int p = 0; bwrap_paths[p]; p++) {
+        if (access(bwrap_paths[p], X_OK) == 0) { bwrap = bwrap_paths[p]; break; }
+    }
+    if (!bwrap) {
+        FILE *fp = popen("which bwrap 2>/dev/null", "r");
+        if (fp) {
+            char buf[4096];
+            if (fgets(buf, sizeof(buf), fp)) {
+                buf[strcspn(buf, "\n")] = 0;
+                if (access(buf, X_OK) == 0) bwrap = bwrap_buf = strdup(buf);
+            }
+            pclose(fp);
+        }
+    }
+    if (!bwrap) {
+        die("bubblewrap (bwrap) not found. Install it (e.g. apt install bubblewrap)");
     }
 
     int arg_max = 64;
