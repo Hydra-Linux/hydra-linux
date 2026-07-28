@@ -387,7 +387,7 @@ int cmd_cache(int argc, char **argv) {
         if (g_flags.dry_run) { printf("Would clean %s\n", g_config.cache_dir); return 0; }
         char cmd[4096];
         snprintf(cmd, sizeof(cmd), "rm -rf '%s'/*", g_config.cache_dir);
-        system(cmd);
+        int rc = system(cmd); (void)rc;
         if (!g_flags.quiet) print_status(1, "cache", "cleaned");
     } else {
         char cmd[4096];

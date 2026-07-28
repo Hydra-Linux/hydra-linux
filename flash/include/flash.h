@@ -27,6 +27,7 @@
 #define FLASH_CONF_PATH "/etc/flash/flash.conf"
 #define FLASH_CACHE_DIR "/var/cache/flash"
 #define FLASH_BUILD_DIR "/var/tmp/flash-build"
+#define FLASH_PATH_MAX 8192
 #define FLASH_RECIPES_DIR "/var/lib/flash/recipes"
 #define FLASH_KEYRING "/etc/flash/keyring"
 #define FLASH_REPO_URL "https://repo.hydralinux.org/flash"

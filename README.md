@@ -1,6 +1,6 @@
 # Hydra Linux
 
-![CI](https://github.com/yourorg/hydra-linux/actions/workflows/build.yml/badge.svg)
+![CI](https://github.com/Hydra-Linux/hydra-linux/actions/workflows/build.yml/badge.svg)
 ![License](https://img.shields.io/badge/license-GPL--3.0-blue.svg)
 
 **Many heads. One system.**
@@ -17,7 +17,7 @@ Hydra Linux is a source-based, rolling-release Linux distribution for x86_64. It
 ## Quick Start
 
 ```bash
-git clone https://github.com/yourorg/hydra-linux
+git clone https://github.com/Hydra-Linux/hydra-linux
 cd hydra-linux
 sudo ./bootstrap/build-all.sh
 ```
@@ -54,6 +54,19 @@ hydra-linux/
 ## Contributing
 
 See [docs/contributing.md](docs/contributing.md) for guidelines. All contributions are welcome — package recipes, bug fixes, documentation, and infrastructure improvements.
+
+## Development
+
+```bash
+# Build flash package manager
+./dev/build.sh flash
+
+# Check recipe syntax
+./dev/build.sh lint
+
+# Full build + lint
+./dev/build.sh all
+```
 
 ## License
 

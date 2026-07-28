@@ -85,7 +85,7 @@ int archive_extract(const char *path, const char *destdir) {
     archive_write_close(ext);
     archive_write_free(ext);
 
-    if (old_cwd) { chdir(old_cwd); free(old_cwd); }
+    if (old_cwd) { int rc = chdir(old_cwd); (void)rc; free(old_cwd); }
     return (r == ARCHIVE_EOF) ? 0 : -1;
 }
 
@@ -119,7 +119,7 @@ int archive_create(const char *srcdir, const char *output_path, char **excludes,
     if (r != ARCHIVE_OK) {
         archive_entry_free(entry); archive_read_free(disk);
         archive_write_close(a); archive_write_free(a);
-        if (srcdir) chdir("/");
+        if (srcdir) { int rc = chdir("/"); (void)rc; }
         return -1;
     }
 
@@ -160,7 +160,7 @@ int archive_create(const char *srcdir, const char *output_path, char **excludes,
     archive_read_free(disk);
     archive_write_close(a);
     archive_write_free(a);
-    if (srcdir) chdir("/");
+    if (srcdir) { int rc = chdir("/"); (void)rc; }
     return 0;
 }
 

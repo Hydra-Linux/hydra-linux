@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -O2 -Wall -Wextra -Iinclude
+CFLAGS = -O2 -Wall -Wextra -Wno-format-truncation -Iinclude
 LDFLAGS = -lsqlite3 -larchive -lgpgme -lpthread -lz
 
 SRC = $(wildcard src/*.c)

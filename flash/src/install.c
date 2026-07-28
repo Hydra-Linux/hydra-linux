@@ -5,8 +5,8 @@ static int run_install_script(const char *root, const char *script, const char *
     if (g_flags.dry_run) { printf("Would run: %s\n", script); return 0; }
     pid_t pid = fork();
     if (pid == 0) {
-        if (root && *root) chroot(root);
-        chdir("/");
+        if (root && *root) { int rc2 = chroot(root); (void)rc2; }
+        { int rc3 = chdir("/"); (void)rc3; }
         setenv("PKG_NAME", pkg_name, 1);
         execl("/bin/sh", "sh", script, NULL);
         _exit(127);
@@ -31,11 +31,11 @@ static int copy_file(const char *src, const char *dst) {
 }
 
 static int install_source(const char *name, const char *version, const char *cache_path) {
-    char build_dir[4096];
+    char build_dir[FLASH_PATH_MAX];
     snprintf(build_dir, sizeof(build_dir), "%s/%s-%s", g_config.build_dir, name, version);
     mkdir_p(build_dir);
 
-    char recipe_path[4096];
+    char recipe_path[FLASH_PATH_MAX];
     snprintf(recipe_path, sizeof(recipe_path), "%s/%s/flash.recipe", g_config.recipes_dir, name);
 
     if (g_flags.dry_run) {
@@ -45,7 +45,7 @@ static int install_source(const char *name, const char *version, const char *cac
 
     if (g_flags.verbose) print_status(1, "build", name);
 
-    char build_script[4096];
+    char build_script[FLASH_PATH_MAX];
     snprintf(build_script, sizeof(build_script), "%s/.flash_build.sh", build_dir);
 
     Package pkg;
@@ -58,10 +58,6 @@ static int install_source(const char *name, const char *version, const char *cac
     int ret = archive_extract(cache_path, build_dir);
     if (ret != 0) { warn("Extract failed for %s", name); return -1; }
 
-    char install_dir[4096];
-    snprintf(install_dir, sizeof(install_dir), "%s/.flash_install", build_dir);
-    mkdir_p(install_dir);
-
     int allow_network = 0;
     char *recipe_data = read_file(recipe_path);
     if (recipe_data && strstr(recipe_data, "network = true")) allow_network = 1;
@@ -70,16 +66,20 @@ static int install_source(const char *name, const char *version, const char *cac
     ret = sandbox_build(recipe_path, build_dir, allow_network);
     if (ret != 0) { warn("Build failed for %s (exit %d)", name, ret); return -1; }
 
-    char pkg_cache[4096];
+    char install_dir[FLASH_PATH_MAX];
+    snprintf(install_dir, sizeof(install_dir), "%s/.flash_install", build_dir);
+    mkdir_p(install_dir);
+
+    char pkg_cache[FLASH_PATH_MAX];
     snprintf(pkg_cache, sizeof(pkg_cache), "%s/%s-%s.tar.zst", g_config.cache_dir, name, version);
     archive_create(install_dir, pkg_cache, NULL, 0);
 
-    char root[4096];
-    snprintf(root, sizeof(root), "%s/", g_config.root ? g_config.root : "");
-    ret = archive_extract(pkg_cache, root);
+    char iroot[FLASH_PATH_MAX];
+    snprintf(iroot, sizeof(iroot), "%s/", g_config.root ? g_config.root : "");
+    ret = archive_extract(pkg_cache, iroot);
     if (ret != 0) { warn("Install extract failed for %s", name); return -1; }
 
-    char install_script[4096];
+    char install_script[FLASH_PATH_MAX];
     snprintf(install_script, sizeof(install_script), "%s/.INSTALL", build_dir);
     run_install_script(g_config.root, install_script, name);
 
@@ -89,7 +89,7 @@ static int install_source(const char *name, const char *version, const char *cac
 
 static int install_binary(const char *name, const char *version, const char *cache_path) {
     (void)version;
-    char sig_path[4096];
+    char sig_path[FLASH_PATH_MAX];
     snprintf(sig_path, sizeof(sig_path), "%s.sig", cache_path);
 
     if (access(sig_path, F_OK) == 0) {
@@ -99,12 +99,12 @@ static int install_binary(const char *name, const char *version, const char *cac
         }
     }
 
-    char root[4096];
+    char root[FLASH_PATH_MAX];
     snprintf(root, sizeof(root), "%s/", g_config.root ? g_config.root : "");
     int ret = archive_extract(cache_path, root);
     if (ret != 0) { warn("Extract failed for %s", name); return -1; }
 
-    char install_script[4096];
+    char install_script[FLASH_PATH_MAX];
     snprintf(install_script, sizeof(install_script), "%s/.INSTALL", root);
     run_install_script(g_config.root, install_script, name);
 
@@ -113,16 +113,16 @@ static int install_binary(const char *name, const char *version, const char *cac
 }
 
 static int install_parts(const char *name, const char *version) {
-    char parts_dir[4096];
+    char parts_dir[FLASH_PATH_MAX];
     snprintf(parts_dir, sizeof(parts_dir), "%s/%s-%s-parts", g_config.cache_dir, name, version);
     mkdir_p(parts_dir);
 
-    char assembly_dir[4096];
+    char assembly_dir[FLASH_PATH_MAX];
     snprintf(assembly_dir, sizeof(assembly_dir), "%s/%s-%s-assembly", g_config.cache_dir, name, version);
     mkdir_p(assembly_dir);
 
     for (int i = 0; ; i++) {
-        char part_path[4096];
+        char part_path[FLASH_PATH_MAX];
         snprintf(part_path, sizeof(part_path), "%s/%s.part.%d.tar.zst", parts_dir, name, i);
         if (access(part_path, F_OK) != 0) break;
 
@@ -131,7 +131,7 @@ static int install_parts(const char *name, const char *version) {
         if (ret != 0) { warn("Part extraction failed for %s.%d", name, i); return -1; }
     }
 
-    char root[4096];
+    char root[FLASH_PATH_MAX];
     snprintf(root, sizeof(root), "%s/", g_config.root ? g_config.root : "");
 
     DIR *d = opendir(assembly_dir);
@@ -139,15 +139,15 @@ static int install_parts(const char *name, const char *version) {
     struct dirent *de;
     while ((de = readdir(d)) != NULL) {
         if (de->d_name[0] == '.') continue;
-        char src[4096], dst[4096];
+        char src[FLASH_PATH_MAX], dst[FLASH_PATH_MAX];
         snprintf(src, sizeof(src), "%s/%s", assembly_dir, de->d_name);
         snprintf(dst, sizeof(dst), "%s/%s", root, de->d_name);
         struct stat st;
         if (lstat(src, &st) < 0) continue;
         if (S_ISLNK(st.st_mode)) {
-            char target[4096];
+            char target[FLASH_PATH_MAX];
             ssize_t n = readlink(src, target, sizeof(target)-1);
-            if (n >= 0) { target[n] = 0; symlink(target, dst); }
+            if (n >= 0) { target[n] = 0; int rc4 = symlink(target, dst); (void)rc4; }
         } else if (S_ISREG(st.st_mode)) {
             copy_file(src, dst);
         } else if (S_ISDIR(st.st_mode)) {
@@ -156,7 +156,7 @@ static int install_parts(const char *name, const char *version) {
     }
     closedir(d);
 
-    char install_script[4096];
+    char install_script[FLASH_PATH_MAX];
     snprintf(install_script, sizeof(install_script), "%s/.INSTALL", root);
     run_install_script(g_config.root, install_script, name);
 

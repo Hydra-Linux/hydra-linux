@@ -506,6 +506,7 @@ while read -r major minor blocks name; do
   echo "  /dev/$name"
 done < /proc/partitions
 exec /bin/bash
+INIT
 sudo chmod +x "$IDIR/init"
 
 cd "$IDIR" && sudo find . | sudo cpio -o -H newc | zstd -f > "$ISODIR/boot/initramfs.img" 2>/dev/null
