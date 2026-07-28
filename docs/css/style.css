@@ -47,6 +47,7 @@ nav { background: var(--bg2); border-bottom: 1px solid var(--border); position: 
 /* Philosophy */
 .philosophy { padding: 5rem 2rem; }
 .philosophy-inner { max-width: 900px; margin: 0 auto; display: flex; gap: 2rem; align-items: stretch; }
+.philosophy-grid { max-width: 900px; margin: 0 auto; display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem; }
 .philosophy-block { flex: 1; background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 2.5rem; border-left: 3px solid var(--accent); }
 .philosophy-block h2 { text-align: left; font-size: 1.5rem; margin-bottom: 0.75rem; }
 .philosophy-block p { color: var(--text2); font-size: 0.95rem; line-height: 1.75; }
@@ -142,6 +143,7 @@ footer a { color: var(--accent); }
   .hero-logo { height: 80px; }
   .nav-links { gap: 1rem; }
   .philosophy-inner { flex-direction: column; }
+  .philosophy-grid { grid-template-columns: 1fr; }
   .about-grid { grid-template-columns: 1fr; }
   .ex-row { grid-template-columns: 1fr 1fr 1fr; font-size: 0.85rem; }
   .doc-links, .community-channels { grid-template-columns: 1fr; }
